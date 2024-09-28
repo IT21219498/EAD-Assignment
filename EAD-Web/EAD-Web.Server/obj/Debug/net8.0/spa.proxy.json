@@ -3,7 +3,7 @@
 "ServerUrl": "https://localhost:5173",
 "RedirectUrl": "",
 "LaunchCommand": "npm run dev",
-"WorkingDirectory": "D:\\SLIIT\\Y4S1\\EAD\\EAD-Web-Application\\EAD-Web\\EAD-Web.Server\\..\\ead-web.client",
+"WorkingDirectory": "d:\\SLIIT\\Y4S1\\EAD\\EAD-Web-Application\\EAD-Web\\EAD-Web.Server\\..\\ead-web.client",
 "MaxTimeoutInSeconds": "120",
 "KeepRunning": "false"
 }

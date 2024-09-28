@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EAD-Web.Server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6e46b2747a7a656cb5db0ec43f7c10b0cbaac053")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+42ed026c89e28f23703beb1a68db608932de1fae")]
 [assembly: System.Reflection.AssemblyProductAttribute("EAD-Web.Server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EAD-Web.Server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
