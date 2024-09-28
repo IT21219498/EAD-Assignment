@@ -1,4 +1,15 @@
+using EAD_Web.Server.Models;
+using MongoDB.Driver;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure MongoDB settings
+builder.Services.Configure<MongoDBSettings>(
+    builder.Configuration.GetSection("MongoDBSettings"));
+
+// Register MongoDB client
+builder.Services.AddSingleton<IMongoClient, MongoClient>(
+    sp => new MongoClient(builder.Configuration.GetValue<string>("MongoDBSettings:ConnectionString")));
 
 // Add services to the container.
 
