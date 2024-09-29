@@ -7,8 +7,8 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path='/' element={<Dashboard />} />
-      <Route path='/products' element={<Products />} />
-      <Route path='/inventory' element={<Inventory />} />
+      <Route path='/Products' element={<Products />} />
+      <Route path='/Inventory' element={<Inventory />} />
     </Routes>
   );
 };

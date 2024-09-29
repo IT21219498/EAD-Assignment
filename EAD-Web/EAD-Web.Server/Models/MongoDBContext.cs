@@ -13,7 +13,10 @@ namespace EAD_Web.Server.Models
         }
 
         // Create a collection for each type of entity you are working with.
-        public IMongoCollection<Product> Products => _database.GetCollection<Product>("products");
+        public IMongoCollection<Product> Products => _database.GetCollection<Product>("Products");
+        public IMongoCollection<Measuringunit> Measuringunits => _database.GetCollection<Measuringunit>("Measuringunits");
+        public IMongoCollection<Category> Categories => _database.GetCollection<Category>("Categories");
+        
         
     }
 }

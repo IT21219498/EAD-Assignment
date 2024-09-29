@@ -1,26 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Table, Form, Button, Modal, Row, Col } from "react-bootstrap";
 import { FaEdit } from "react-icons/fa";
 import { RiDeleteBin5Line } from "react-icons/ri";
+import { fetchProducts, fetchCategories, fetchUOMs } from "../apis/products";
 
 const Products = () => {
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Product 1",
-      category: "Category 1",
-      price: 100,
-      active: false,
-    },
-    {
-      id: 2,
-      name: "Product 2",
-      category: "Category 2",
-      price: 150,
-      active: false,
-    },
-  ]);
-
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [uoms, setUoms] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [newProduct, setNewProduct] = useState({
@@ -33,7 +20,40 @@ const Products = () => {
     price: 0,
     cost: 0,
     reorderLevel: 0,
+    active: false,
+    image: "",
   });
+
+  useEffect(() => {
+    Promise.all([loadProducts(), loadCategories(), loadUOMs()]);
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      const data = await fetchProducts();
+      setProducts(data);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const data = await fetchCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const loadUOMs = async () => {
+    try {
+      const data = await fetchUOMs();
+      setUoms(data);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -96,9 +116,13 @@ const Products = () => {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Product ID</th>
             <th>Product Name</th>
+            <th>Description</th>
+            <th>Code</th>
             <th>Category</th>
+            <th>UOM</th>
+            <th>Item per Case</th>
+            <th>Cost</th>
             <th>Price</th>
             <th>Status</th>
             <th>Actions</th>
@@ -106,12 +130,16 @@ const Products = () => {
         </thead>
         <tbody>
           {products.map((product) => (
-            <tr key={product.id}>
-              <td>{product.id}</td>
+            <tr key={product.id.timestamp}>
               <td>{product.name}</td>
-              <td>{product.category}</td>
+              <td>{product.description}</td>
+              <td>{product.code}</td>
+              <td>{product.categoryId}</td>
+              <td>{product.measurementUnitId}</td>
+              <td>{product.itemPerCase}</td>
+              <td>{product.cost}</td>
               <td>${product.price}</td>
-              <td>{product.active ? "Active" : "Inactive"}</td>
+              <td>{product.isActive ? "Active" : "Inactive"}</td>
               <td>
                 <Button
                   variant={product.active ? "danger" : "success"}
@@ -210,9 +238,14 @@ const Products = () => {
                     onChange={handleInputChange}
                   >
                     <option value=''>Select Category</option>
-                    <option value='Category 1'>Category 1</option>
-                    <option value='Category 2'>Category 2</option>
-                    <option value='Category 3'>Category 3</option>
+                    {categories.map((category) => (
+                      <option
+                        key={category.id.timestamp}
+                        value={category.id.timestamp}
+                      >
+                        {category.name}
+                      </option>
+                    ))}
                   </Form.Select>
                 </Form.Group>
               </Col>
@@ -226,9 +259,11 @@ const Products = () => {
                     onChange={handleInputChange}
                   >
                     <option value=''>Select UOM</option>
-                    <option value='Each'>Each</option>
-                    <option value='Dozen'>Dozen</option>
-                    <option value='Pound'>Pound</option>
+                    {uoms.map((uom) => (
+                      <option key={uom.id.timestamp} value={uom.id.timestamp}>
+                        {uom.unit}
+                      </option>
+                    ))}
                   </Form.Select>
                 </Form.Group>
               </Col>
@@ -280,6 +315,19 @@ const Products = () => {
                     value={newProduct.reorderLevel}
                     onChange={handleInputChange}
                     placeholder='Enter reorder level'
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={4}>
+                <Form.Group className='mb-3'>
+                  <Form.Label>Image</Form.Label>
+                  <Form.Control
+                    type='file'
+                    name='image'
+                    value={newProduct.image}
+                    onChange={handleInputChange}
                   />
                 </Form.Group>
               </Col>

@@ -1,5 +1,6 @@
 using EAD_Web.Server.Models;
 using MongoDB.Driver;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,10 +12,11 @@ builder.Services.Configure<MongoDBSettings>(
 builder.Services.AddSingleton<IMongoClient, MongoClient>(
     sp => new MongoClient(builder.Configuration.GetValue<string>("MongoDBSettings:ConnectionString")));
 
-// Add services to the container.
+// Register MongoDBContext
+builder.Services.AddScoped<MongoDBContext>();
 
+// Add services to the container.
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -31,11 +33,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.MapFallbackToFile("/index.html");
 
 app.Run();
