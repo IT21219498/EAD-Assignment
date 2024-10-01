@@ -8,13 +8,13 @@ namespace EAD_Web.Server.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string OrderId { get; set; }  // Unique identifier for the order
+        public ObjectId OrderId { get; set; }  // Unique identifier for the order
 
         [BsonElement("invoiceNo")]
         public int InvoiceNo { get;set; }
 
         [BsonElement("customerId")]
-        public ObjectId CustomerId { get; set; }  // Unique ID for the associated Order Item
+        public Guid CustomerId { get; set; }  // Unique ID for the associated Order Item
 
         [BsonElement("status")]
         public string Status { get; set; }  // Order status, e.g., "Processing", "Delivered", "Cancelled"

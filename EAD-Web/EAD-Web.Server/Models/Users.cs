@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿/*
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
 
 namespace EAD_Web.Server.Models
@@ -31,6 +32,29 @@ namespace EAD_Web.Server.Models
 
         [BsonElement("updatedAt")]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        public DateTime UpdatedAt { get; set; }
+    }
+}
+
+*/
+
+using AspNetCore.Identity.MongoDbCore.Models;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDbGenericRepository.Attributes;
+
+namespace EAD_Web.Server.Models
+{
+
+
+    public class Users : MongoIdentityUser<Guid>
+    {
+     
+
+        public string Role { get; set; }
+        public string FullName { get; set; }
+        public string Address { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
 }

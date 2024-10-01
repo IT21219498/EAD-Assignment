@@ -2,21 +2,13 @@ import { useEffect, useState } from "react";
 import { Table, Form, Button, Modal, Row, Col } from "react-bootstrap";
 import { FaEdit } from "react-icons/fa";
 import { RiDeleteBin5Line } from "react-icons/ri";
-import {
-  // fetchProducts,
-  // fetchCategories,
-  // fetchUOMs,
-  fetchOrders,
-} from "../apis/orders";
-import DataTable from "../components/DataTable";
+import { fetchOrders } from "../apis/orders";
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [uoms, setUoms] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [newProduct, setNewProduct] = useState({
+  const [newOrder, setNewOrder] = useState({
     name: "",
     description: "",
     code: "",
@@ -29,20 +21,6 @@ const OrderManagement = () => {
     active: false,
     image: "",
   });
-
-  const columns = [
-    { title: "Cheque No", field: "ChequeNo" },
-    { title: "Cheque Date", field: "ChequeDate" },
-    { title: "Deposited Date", field: "DepositedDate" },
-    { title: "Amount", field: "Amount", footerValue: true },
-    { title: "Bank Account Name", field: "BankAccountName" },
-    { title: "Bank Account Branch Name", field: "BankAccountBranchName" },
-    { title: "Cheque Bank Account Name", field: "ChequeBankAccountName" },
-    {
-      title: "Cheque Bank Account Branch Name",
-      field: "ChequeBankAccountBranchName",
-    },
-  ];
 
   useEffect(() => {
     loadOrders();
@@ -59,19 +37,19 @@ const OrderManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewProduct({ ...newProduct, [name]: value });
+    setNewOrder({ ...newOrder, [name]: value });
   };
 
   const handleModalClose = () => {
     setShowModal(false);
     setEditingProduct(null);
-    setNewProduct({ name: "", category: "", price: 0, active: false });
+    setNewOrder({ name: "", category: "", price: 0, active: false });
   };
 
   const handleModalShow = (product = null) => {
     if (product) {
       setEditingProduct(product);
-      setNewProduct(product);
+      setNewOrder(product);
     }
     setShowModal(true);
   };
@@ -80,13 +58,13 @@ const OrderManagement = () => {
     if (editingProduct) {
       setOrders(
         orders.map((product) =>
-          product.id === editingProduct.id ? newProduct : product
+          product.id === editingProduct.id ? newOrder : product
         )
       );
     } else {
       setOrders([
         ...orders,
-        { ...newProduct, id: orders.length + 1, active: false },
+        { ...newOrder, id: orders.length + 1, active: false },
       ]);
     }
     handleModalClose();
@@ -106,7 +84,7 @@ const OrderManagement = () => {
 
   return (
     <div className='container '>
-      <h2 className='d-flex justify-content-center'>Products</h2>
+      <h2 className='d-flex justify-content-center'>Orders</h2>
       <Button
         variant='primary'
         className='mb-3'
@@ -115,15 +93,50 @@ const OrderManagement = () => {
         New Order
       </Button>
 
-      <DataTable
-        key={JSON.stringify(jsondata)}
-        columns={columns}
-        dataUrl={`${process.env.REACT_APP_BASE_URL}chequedepositreports/getChequesToDepositReports`}
-        jsondata={jsondata}
-        options={options}
-        printFooter={printFooter}
-        printHeader={"Cheque Deposit Report"}
-      />
+      <Table striped bordered hover>
+        <thead>
+          <tr>
+            <th>Invoice No</th>
+            <th>Customer Email</th>
+            <th>Order Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map((order) => (
+            <tr key={order.id}>
+              <td>{order.invoiceNo}</td>
+              <td>{order.email}</td>
+              <td>{order.orderDate}</td>
+              <td>{order.status}</td>
+              {/* <td>{order.isActive ? "Active" : "Inactive"}</td>
+              <td>
+                <Button
+                  variant={order.active ? "danger" : "success"}
+                  onClick={() => toggleProductStatus(order.id)}
+                  className="me-2"
+                >
+                  {order.active ? "Deactivate" : "Activate"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleModalShow(order)}
+                  className="mx-2"
+                >
+                  <FaEdit />
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => handleDeleteProduct(order.id)}
+                >
+                  <RiDeleteBin5Line />
+                </Button>
+              </td> */}
+            </tr>
+          ))}
+        </tbody>
+      </Table>
 
       {/* Modal for Add/Edit Product */}
       <Modal show={showModal} onHide={handleModalClose} size='xl'>
@@ -137,11 +150,11 @@ const OrderManagement = () => {
             <Row>
               <Col md={4}>
                 <Form.Group className='mb-3'>
-                  <Form.Label>Name</Form.Label>
+                  <Form.Label>InvoiceNo</Form.Label>
                   <Form.Control
                     type='text'
-                    name='name'
-                    value={newProduct.name}
+                    name='invoiceNo'
+                    value={newOrder.invoiceNo}
                     onChange={handleInputChange}
                     placeholder='Enter product name'
                   />
@@ -153,7 +166,7 @@ const OrderManagement = () => {
                   <Form.Control
                     type='text'
                     name='description'
-                    value={newProduct.description}
+                    value={newOrder.description}
                     onChange={handleInputChange}
                     placeholder='Enter product description'
                   />
@@ -165,7 +178,7 @@ const OrderManagement = () => {
                   <Form.Control
                     type='text'
                     name='code'
-                    value={newProduct.code}
+                    value={newOrder.code}
                     onChange={handleInputChange}
                     placeholder='Enter product code'
                   />
@@ -178,9 +191,9 @@ const OrderManagement = () => {
                     type='switch'
                     id='active-switch'
                     name='active'
-                    checked={newProduct.active}
+                    checked={newOrder.active}
                     onChange={(e) =>
-                      setNewProduct({ ...newProduct, active: e.target.checked })
+                      setNewOrder({ ...newOrder, active: e.target.checked })
                     }
                   />
                 </Form.Group>
@@ -192,18 +205,18 @@ const OrderManagement = () => {
                   <Form.Label>Category</Form.Label>
                   <Form.Select
                     name='category'
-                    value={newProduct.category}
+                    value={newOrder.category}
                     onChange={handleInputChange}
                   >
                     <option value=''>Select Category</option>
-                    {categories.map((category) => (
+                    {/* {categories.map((category) => (
                       <option
                         key={category.id.timestamp}
                         value={category.id.timestamp}
                       >
                         {category.name}
                       </option>
-                    ))}
+                    ))} */}
                   </Form.Select>
                 </Form.Group>
               </Col>
@@ -213,15 +226,15 @@ const OrderManagement = () => {
                   <Form.Label>Unit of Measure</Form.Label>
                   <Form.Select
                     name='uom'
-                    value={newProduct.uom}
+                    value={newOrder.uom}
                     onChange={handleInputChange}
                   >
                     <option value=''>Select UOM</option>
-                    {uoms.map((uom) => (
+                    {/* {uoms.map((uom) => (
                       <option key={uom.id.timestamp} value={uom.id.timestamp}>
                         {uom.unit}
                       </option>
-                    ))}
+                    ))} */}
                   </Form.Select>
                 </Form.Group>
               </Col>
@@ -232,7 +245,7 @@ const OrderManagement = () => {
                   <Form.Control
                     type='number'
                     name='itemPerCase'
-                    value={newProduct.itemPerCase}
+                    value={newOrder.itemPerCase}
                     onChange={handleInputChange}
                     placeholder='Enter item per case'
                   />
@@ -246,7 +259,7 @@ const OrderManagement = () => {
                   <Form.Control
                     type='number'
                     name='price'
-                    value={newProduct.price}
+                    value={newOrder.price}
                     onChange={handleInputChange}
                     placeholder='Enter product price'
                   />
@@ -258,7 +271,7 @@ const OrderManagement = () => {
                   <Form.Control
                     type='number'
                     name='cost'
-                    value={newProduct.cost}
+                    value={newOrder.cost}
                     onChange={handleInputChange}
                     placeholder='Enter product cost'
                   />
@@ -270,7 +283,7 @@ const OrderManagement = () => {
                   <Form.Control
                     type='number'
                     name='reorderLevel'
-                    value={newProduct.reorderLevel}
+                    value={newOrder.reorderLevel}
                     onChange={handleInputChange}
                     placeholder='Enter reorder level'
                   />
@@ -284,7 +297,7 @@ const OrderManagement = () => {
                   <Form.Control
                     type='file'
                     name='image'
-                    value={newProduct.image}
+                    value={newOrder.image}
                     onChange={handleInputChange}
                   />
                 </Form.Group>
