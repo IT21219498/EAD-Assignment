@@ -69,7 +69,7 @@ export const fetchUOMs = async () => {
 
 export const saveProduct = async (product) => {
   try {
-    const response = await fetch("api/Products/saveproduct", {
+    const response = await fetch("api/Products/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
