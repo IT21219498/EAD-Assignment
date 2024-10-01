@@ -1,6 +1,6 @@
 export const fetchOrders = async () => {
   try {
-    const response = await fetch("api/Orders/dummy", {
+    const response = await fetch("api/Order/orders", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
