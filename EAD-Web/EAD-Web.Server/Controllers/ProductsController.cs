@@ -61,5 +61,22 @@ namespace EAD_Web.Server.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        // save product
+        [HttpPost("saveproduct")]
+        public async Task<ActionResult<Product>> SaveProduct(Product product)
+        {
+            try
+            {
+                await _mongoContext.Products.InsertOneAsync(product);
+                
+                return Ok(new { message = "Product saved successfully" });
+ 
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
