@@ -1,10 +1,9 @@
 const Vendor = () => {
-    const 
-  return (
-      <div
-          className
-          ='bg-primary'
-      >Vendor</div>
+    return (
+        <div
+            className
+            ='bg-primary'
+        >Vendor</div>
   );
 }
 
