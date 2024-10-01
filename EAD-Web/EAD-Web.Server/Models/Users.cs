@@ -39,6 +39,7 @@ namespace EAD_Web.Server.Models
 */
 
 using AspNetCore.Identity.MongoDbCore.Models;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDbGenericRepository.Attributes;
 
 namespace EAD_Web.Server.Models
@@ -47,6 +48,8 @@ namespace EAD_Web.Server.Models
 
     public class Users : MongoIdentityUser<Guid>
     {
+     
+
         public string Role { get; set; }
         public string FullName { get; set; }
         public string Address { get; set; }

@@ -1,20 +1,4 @@
-export const registerUser = async () =>{
-    const registerModel = {
-        // email: "testuser@example.com",
-        // fullName: "Test User",
-        // phoneNumber: "1234567890",
-        // address: "123 Main St, City, Country",
-        // password: "Test@12345",
-        // role: "Vendor"  // CSR or Vendor
-
-        fullName: "UserTwo3",
-        email: "User@gmail.com",
-        phoneNumber: "0998999098",
-        address: "string",
-        password: "S@stfe24242dfeering",
-        role: "Vendor"
-    };
-
+export const registerUser = async (registerModel) =>{
     try{
         const response = await fetch('/api/Account/register', {
             method: 'POST',
