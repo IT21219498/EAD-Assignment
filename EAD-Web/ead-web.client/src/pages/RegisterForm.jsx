@@ -5,6 +5,7 @@ import {
   MDBRow,
   MDBCol,
   MDBInput,
+  MDBRadio 
 } from "mdb-react-ui-kit";
 
 const RegisterForm = () => {
@@ -62,6 +63,25 @@ const RegisterForm = () => {
 
             <div className="text-center pt-1 mb-5 pb-1">
               <MDBBtn className="mb-4 w-100 gradient-custom-2">Sign Up</MDBBtn>
+            </div>
+
+            <div className="mb-4">
+              <label className="form-label">Select Role</label>
+              <div>
+                <MDBRadio
+                  name="role"
+                  id="Vendor"
+                  label="Vendor"
+                  value="Vendor"
+                  defaultChecked
+                />
+                <MDBRadio
+                  name="role"
+                  id="CSR"
+                  label="CSR"
+                  value="CSR"
+                />
+              </div>
             </div>
 
             <div className="d-flex flex-row align-items-center justify-content-center pb-4 mb-4">

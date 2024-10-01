@@ -4,7 +4,7 @@ import Products from "./pages/Products";
 import Inventory from "./pages/Inventory";
 import LoginForm from "./pages/LoginForm";
 import RegisterForm from "./pages/RegisterForm";
-import OrderManagement from "./pages/OrderManagement";
+// import OrderManagement from "./pages/OrderManagement";
 
 const AppRoutes = () => {
   return (
@@ -14,7 +14,7 @@ const AppRoutes = () => {
       <Route path='/Inventory' element={<Inventory />} />
       <Route path='/Login' element={<LoginForm />} />
       <Route path='/Register' element={<RegisterForm />} />
-      <Route path="/OrderManagement" element={<OrderManagement />} />
+      {/* <Route path="/OrderManagement" element={<OrderManagement />} /> */}
     </Routes>
   );
 };

@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
+using Microsoft.AspNetCore.Identity;
+using EAD_Web.Server.DTOs;
+
+/*
 
 namespace EAD_Web.Server.Controllers
 {
@@ -87,4 +91,50 @@ namespace EAD_Web.Server.Controllers
             }
         }
     }
+}
+*/
+
+namespace EAD_Web.Server.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class UserController : ControllerBase
+    {
+        private readonly UserManager<Users> _userManager;
+
+        public UserController(UserManager<Users> userManager)
+        {
+            _userManager = userManager;
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] UserRegisterDTO model)
+        {
+            var user = new Users
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                FullName = model.FullName,
+                PhoneNumber = model.PhoneNumber,
+                Address = model.Address,
+                IsActive = true,  // Default to active until disapproved
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                Role = model.Role
+            };
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+
+//            await _userManager.AddToRoleAsync(user, model.Role);  // Assign the role
+
+            return Ok("User registered successfully.");
+        }
+    }
+
+
 }

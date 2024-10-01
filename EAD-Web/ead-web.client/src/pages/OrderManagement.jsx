@@ -8,7 +8,7 @@ import {
   fetchUOMs,
   fetchOrders,
 } from "../apis/orders";
-import DataTable from "../components/DataTable";
+// import DataTable from "../components/DataTable";
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -115,7 +115,7 @@ const OrderManagement = () => {
         New Order
       </Button>
 
-      <DataTable
+      {/* <DataTable
         key={JSON.stringify(jsondata)}
         columns={columns}
         dataUrl={`${process.env.REACT_APP_BASE_URL}chequedepositreports/getChequesToDepositReports`}
@@ -123,7 +123,7 @@ const OrderManagement = () => {
         options={options}
         printFooter={printFooter}
         printHeader={"Cheque Deposit Report"}
-      />
+      /> */}
 
       {/* Modal for Add/Edit Product */}
       <Modal show={showModal} onHide={handleModalClose} size="xl">
