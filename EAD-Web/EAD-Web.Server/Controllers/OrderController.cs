@@ -26,7 +26,36 @@ namespace EAD_Web.Server.Controllers
             try
             {
                 var orders = await _mongoContext.Orders.Find(_ => true).ToListAsync();
-                return Ok(orders);
+                var orderResponse = new List<Object>();
+
+                foreach (var order in orders)
+                {
+                    var orderItems = await _mongoContext.OrderItems.Find(oi => oi.OrderId == order.OrderId).ToListAsync();
+                    var orderItemResponse = new List<Object>();
+                    var user = await _mongoContext.Users.Find(u => u.UserId == order.CustomerId).FirstOrDefaultAsync();
+                    foreach (var orderItem in orderItems)
+                    {
+                        var product = await _mongoContext.Products.Find(p => p.Id == orderItem.ProductId).FirstOrDefaultAsync();
+                       
+                        orderItemResponse.Add(new
+                        {          
+                            productName = product.Name,
+                            quantity = orderItem.Quantity,
+                            price = orderItem.Price
+                        });
+                    }
+
+                    orderResponse.Add(new
+                    {
+                        invoiceNo = order.InvoiceNo,
+                        email = user.Email,
+                        orderDate = order.CreatedAt.Date.ToString("yyyy-MM-dd"),
+                        status = order.Status,
+                        OrderItems = orderItemResponse
+                    });
+                }
+
+                return Ok(orderResponse);
             }
             catch (System.Exception ex)
             {
@@ -168,58 +197,58 @@ namespace EAD_Web.Server.Controllers
         //}
 
         // Temporary API to add dummy orders and order items (For Testing)
-        [HttpPost("orders/dummy")]
-        public async Task<ActionResult> AddDummyOrder()
-        {
-            var product = await _mongoContext.Products.Find(p => p.Code == "OJ123").FirstOrDefaultAsync();
-            var product2 = await _mongoContext.Products.Find(p => p.Code == "MLK001").FirstOrDefaultAsync();
+        //[HttpPost("orders/dummy")]
+        //public async Task<ActionResult> AddDummyOrder()
+        //{
+        //    var product = await _mongoContext.Products.Find(p => p.Code == "OJ123").FirstOrDefaultAsync();
+        //    var product2 = await _mongoContext.Products.Find(p => p.Code == "MLK001").FirstOrDefaultAsync();
 
-            // Dummy order creation
-            var dummyOrder = new Orders
-            {
-                OrderId = ObjectId.GenerateNewId().ToString(), // Generate a new ObjectId and convert it to string
-                Status = "Processing",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+        //    // Dummy order creation
+        //    var dummyOrder = new Orders
+        //    {
+        //        OrderId = ObjectId.GenerateNewId().ToString(), // Generate a new ObjectId and convert it to string
+        //        Status = "Processing",
+        //        CreatedAt = DateTime.UtcNow,
+        //        UpdatedAt = DateTime.UtcNow
+        //    };
 
-            try
-            {
-                // Insert dummy order
-                await _mongoContext.Orders.InsertOneAsync(dummyOrder);
+        //    try
+        //    {
+        //        // Insert dummy order
+        //        await _mongoContext.Orders.InsertOneAsync(dummyOrder);
 
-                // Dummy order items creation
-                var dummyOrderItems = new List<OrderItems>
-        {
-            new OrderItems
-            {
-                OrderId = new ObjectId(dummyOrder.OrderId), // Convert string to ObjectId
-                ProductId = product.Id,
-                Quantity = 1,
-                Price = 300,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new OrderItems
-            {
-                OrderId = new ObjectId(dummyOrder.OrderId), // Convert string to ObjectId
-                ProductId = product2.Id,
-                Quantity = 3,
-                Price = 300,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            }
-        };
+        //        // Dummy order items creation
+        //        var dummyOrderItems = new List<OrderItems>
+        //{
+        //    new OrderItems
+        //    {
+        //        OrderId = new ObjectId(dummyOrder.OrderId), // Convert string to ObjectId
+        //        ProductId = product.Id,
+        //        Quantity = 1,
+        //        Price = 300,
+        //        CreatedAt = DateTime.UtcNow,
+        //        UpdatedAt = DateTime.UtcNow
+        //    },
+        //    new OrderItems
+        //    {
+        //        OrderId = new ObjectId(dummyOrder.OrderId), // Convert string to ObjectId
+        //        ProductId = product2.Id,
+        //        Quantity = 3,
+        //        Price = 300,
+        //        CreatedAt = DateTime.UtcNow,
+        //        UpdatedAt = DateTime.UtcNow
+        //    }
+        //};
 
-                // Insert dummy order items
-                await _mongoContext.OrderItems.InsertManyAsync(dummyOrderItems);
+        //        // Insert dummy order items
+        //        await _mongoContext.OrderItems.InsertManyAsync(dummyOrderItems);
 
-                return Ok("Dummy order and order items added successfully");
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+        //        return Ok("Dummy order and order items added successfully");
+        //    }
+        //    catch (System.Exception ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+        //}
     }
 }

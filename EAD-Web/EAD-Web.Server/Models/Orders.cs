@@ -8,7 +8,7 @@ namespace EAD_Web.Server.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string OrderId { get; set; }  // Unique identifier for the order
+        public ObjectId OrderId { get; set; }  // Unique identifier for the order
 
         [BsonElement("invoiceNo")]
         public int InvoiceNo { get;set; }
