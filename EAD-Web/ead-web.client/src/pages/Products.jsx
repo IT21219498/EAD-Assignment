@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { Table, Form, Button, Modal, Row, Col } from "react-bootstrap";
 import { FaEdit } from "react-icons/fa";
 import { RiDeleteBin5Line } from "react-icons/ri";
-import { fetchProducts, fetchCategories, fetchUOMs } from "../apis/products";
+import {
+  fetchProducts,
+  fetchCategories,
+  fetchUOMs,
+  saveProduct,
+} from "../apis/products";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -21,6 +26,18 @@ const Products = () => {
     cost: 0,
     reorderLevel: 0,
     active: false,
+    image: "",
+  });
+  const [formErrors, setFormErrors] = useState({
+    name: "",
+    description: "",
+    code: "",
+    category: "",
+    uom: "",
+    itemPerCase: "",
+    price: "",
+    cost: "",
+    reorderLevel: "",
     image: "",
   });
 
@@ -61,6 +78,7 @@ const Products = () => {
   };
 
   const handleModalClose = () => {
+    handleReset();
     setShowModal(false);
     setEditingProduct(null);
     setNewProduct({ name: "", category: "", price: 0, active: false });
@@ -74,7 +92,48 @@ const Products = () => {
     setShowModal(true);
   };
 
+  const validateForm = () => {
+    let errors = {};
+    let isValid = true;
+
+    if (!newProduct.name) {
+      errors.name = "Product name is required";
+      isValid = false;
+    }
+
+    if (!newProduct.category) {
+      errors.category = "Category is required";
+      isValid = false;
+    }
+
+    if (!newProduct.uom) {
+      errors.uom = "Unit of measure is required";
+      isValid = false;
+    }
+
+    if (!newProduct.price) {
+      errors.price = "Price is required";
+      isValid = false;
+    }
+
+    if (!newProduct.cost) {
+      errors.cost = "Cost is required";
+      isValid = false;
+    }
+
+    if (!newProduct.itemPerCase) {
+      errors.itemPerCase = "Item per case is required";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
   const handleSaveProduct = () => {
+    if (!validateForm()) {
+      return;
+    }
     if (editingProduct) {
       setProducts(
         products.map((product) =>
@@ -82,10 +141,25 @@ const Products = () => {
         )
       );
     } else {
-      setProducts([
-        ...products,
-        { ...newProduct, id: products.length + 1, active: false },
-      ]);
+      const newProduct = {
+        Name: newProduct.name,
+        Description: newProduct.description,
+        Code: newProduct.code,
+        CategoryId: newProduct.category,
+        MeasurementUnitId: newProduct.uom,
+        ItemPerCase: newProduct.itemPerCase,
+        Price: newProduct.price,
+        Cost: newProduct.cost,
+        ReorderLevel: newProduct.reorderLevel,
+        IsActive: newProduct.active,
+        Image: newProduct.image,
+      };
+
+      const result = saveProduct(newProduct);
+      if (result.error) {
+        console.error("Error:", result.error);
+        return;
+      }
     }
     handleModalClose();
   };
@@ -100,6 +174,37 @@ const Products = () => {
         product.id === id ? { ...product, active: !product.active } : product
       )
     );
+  };
+
+  const handleReset = () => {
+    setNewProduct({
+      name: "",
+      description: "",
+      code: "",
+      category: "",
+      uom: "",
+      itemPerCase: 0,
+      price: 0,
+      cost: 0,
+      reorderLevel: 0,
+      active: false,
+      image: "",
+    });
+
+    setFormErrors({
+      name: "",
+      description: "",
+      code: "",
+      category: "",
+      uom: "",
+      itemPerCase: "",
+      price: "",
+      cost: "",
+      reorderLevel: "",
+      image: "",
+    });
+
+    setEditingProduct(null);
   };
 
   return (
@@ -130,7 +235,7 @@ const Products = () => {
         </thead>
         <tbody>
           {products.map((product) => (
-            <tr key={product.id.timestamp}>
+            <tr key={product.id.increment}>
               <td>{product.name}</td>
               <td>{product.description}</td>
               <td>{product.code}</td>
@@ -186,7 +291,11 @@ const Products = () => {
                     value={newProduct.name}
                     onChange={handleInputChange}
                     placeholder='Enter product name'
+                    isInvalid={formErrors.name}
                   />
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.name}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={5}>
@@ -198,7 +307,11 @@ const Products = () => {
                     value={newProduct.description}
                     onChange={handleInputChange}
                     placeholder='Enter product description'
+                    isInvalid={formErrors.description}
                   />
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.description}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={2}>
@@ -210,7 +323,11 @@ const Products = () => {
                     value={newProduct.code}
                     onChange={handleInputChange}
                     placeholder='Enter product code'
+                    isInvalid={formErrors.code}
                   />
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.code}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={1}>
@@ -224,7 +341,11 @@ const Products = () => {
                     onChange={(e) =>
                       setNewProduct({ ...newProduct, active: e.target.checked })
                     }
+                    isInvalid={formErrors.active}
                   />
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.active}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
@@ -236,17 +357,21 @@ const Products = () => {
                     name='category'
                     value={newProduct.category}
                     onChange={handleInputChange}
+                    isInvalid={formErrors.category}
                   >
                     <option value=''>Select Category</option>
                     {categories.map((category) => (
                       <option
-                        key={category.id.timestamp}
-                        value={category.id.timestamp}
+                        key={category.id.increment}
+                        value={category.id.increment}
                       >
                         {category.name}
                       </option>
                     ))}
                   </Form.Select>
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.category}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
 
@@ -257,14 +382,18 @@ const Products = () => {
                     name='uom'
                     value={newProduct.uom}
                     onChange={handleInputChange}
+                    isInvalid={formErrors.uom}
                   >
                     <option value=''>Select UOM</option>
                     {uoms.map((uom) => (
-                      <option key={uom.id.timestamp} value={uom.id.timestamp}>
+                      <option key={uom.id.increment} value={uom.id.increment}>
                         {uom.unit}
                       </option>
                     ))}
                   </Form.Select>
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.uom}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
 
@@ -277,7 +406,11 @@ const Products = () => {
                     value={newProduct.itemPerCase}
                     onChange={handleInputChange}
                     placeholder='Enter item per case'
+                    isInvalid={formErrors.itemPerCase}
                   />
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.itemPerCase}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
@@ -291,7 +424,11 @@ const Products = () => {
                     value={newProduct.price}
                     onChange={handleInputChange}
                     placeholder='Enter product price'
+                    isInvalid={formErrors.price}
                   />
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.price}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={4}>
@@ -303,7 +440,11 @@ const Products = () => {
                     value={newProduct.cost}
                     onChange={handleInputChange}
                     placeholder='Enter product cost'
+                    isInvalid={formErrors.cost}
                   />
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.cost}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={4}>
@@ -315,7 +456,11 @@ const Products = () => {
                     value={newProduct.reorderLevel}
                     onChange={handleInputChange}
                     placeholder='Enter reorder level'
+                    isInvalid={formErrors.reorderLevel}
                   />
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.reorderLevel}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
@@ -328,7 +473,11 @@ const Products = () => {
                     name='image'
                     value={newProduct.image}
                     onChange={handleInputChange}
+                    isInvalid={formErrors.image}
                   />
+                  <Form.Control.Feedback type='invalid'>
+                    {formErrors.image}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
@@ -337,6 +486,9 @@ const Products = () => {
         <Modal.Footer>
           <Button variant='secondary' onClick={handleModalClose}>
             Cancel
+          </Button>
+          <Button variant='danger' onClick={handleReset}>
+            Reset
           </Button>
           <Button variant='primary' onClick={handleSaveProduct}>
             {editingProduct ? "Update Product" : "Add Product"}

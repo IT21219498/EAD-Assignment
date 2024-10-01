@@ -11,7 +11,7 @@ namespace EAD_Web.Server.Models
         public string OrderId { get; set; }  // Unique identifier for the order
 
         [BsonElement("invoiceNo")]
-        public int InvoiceNo { get;,set; }
+        public int InvoiceNo { get;set; }
 
         [BsonElement("customerId")]
         public ObjectId CustomerId { get; set; }  // Unique ID for the associated Order Item
