@@ -59,7 +59,7 @@ const NavigationBar = ({ userRole }) => {
                   <NavDropdown.Item href="/Inventory">
                     Inventory Management
                   </NavDropdown.Item>
-                  <NavDropdown.Item href="#vendor-management">
+                  <NavDropdown.Item href="/Vendor">
                     Vendor Management
                   </NavDropdown.Item>
                 </NavDropdown>
