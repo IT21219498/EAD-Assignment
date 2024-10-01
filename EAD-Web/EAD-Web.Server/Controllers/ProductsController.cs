@@ -3,6 +3,9 @@ using MongoDB.Driver;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MongoDB.Bson;
+using EAD_Web.Server.DTOs;
+
 
 namespace EAD_Web.Server.Controllers
 {
@@ -11,10 +14,13 @@ namespace EAD_Web.Server.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly MongoDBContext _mongoContext;
+        private readonly ILogger<ProductsController> _logger;
 
-        public ProductsController(MongoDBContext mongoContext)
+        public ProductsController(MongoDBContext mongoContext, ILogger<ProductsController> logger)
         {
             _mongoContext = mongoContext;
+            _logger = logger;
+            
         }
 
         // Get all products
@@ -23,11 +29,38 @@ namespace EAD_Web.Server.Controllers
         {
             try
             {
-                var products = await _mongoContext.Products.Find(_ => true).ToListAsync();
-                return Ok(products);
+                var products = new List<Product>();
+                products = await _mongoContext.Products.Find(_ => true).ToListAsync();
+
+                var productsDto = new List<ProductDto>();
+
+                foreach (var product in products)
+                {
+                    var category = await _mongoContext.Categories.Find(x => x.Id == product.CategoryId).FirstOrDefaultAsync();
+                    var measuringUnit = await _mongoContext.Measuringunits.Find(x => x.Id == product.MeasurementUnitId).FirstOrDefaultAsync();
+
+                    productsDto.Add(new ProductDto
+                    {
+                        Id = product.Id,
+                        Name = product.Name,
+                        Code = product.Code,
+                        Price = product.Price,
+                        Cost = product.Cost,
+                        ReorderLevel = product.ReorderLevel,
+                        CategoryId = product.CategoryId,
+                        CategoryName = category.Name,
+                        MeasurementUnitName = measuringUnit.Unit,
+                        Description = product.Description,
+                        ItemPerCase = product.ItemPerCase,
+                        ImageUrl = product.ImageUrl
+                    });
+                }
+
+                return Ok(productsDto);
             }
             catch (System.Exception ex)
             {
+                _logger.LogError(ex, "Error in getting all products");
                 return BadRequest(ex.Message);
             }
         }
@@ -43,6 +76,7 @@ namespace EAD_Web.Server.Controllers
             }
             catch (System.Exception ex)
             {
+                _logger.LogError(ex, "Error in getting all categories");
                 return BadRequest(ex.Message);
             }
         }
@@ -58,23 +92,76 @@ namespace EAD_Web.Server.Controllers
             }
             catch (System.Exception ex)
             {
+                _logger.LogError(ex, "Error in getting all measuring units");
                 return BadRequest(ex.Message);
             }
         }
 
-        // save product
-        [HttpPost("saveproduct")]
-        public async Task<ActionResult<Product>> SaveProduct(Product product)
+       [HttpPost("create")]
+        public async Task<IActionResult> CreateProduct([FromBody] ProductDto productDto)
         {
-            try
+
+            // Validate if category and measurement unit exist before creation
+            var categoryExists = await _mongoContext.Categories.Find(x => x.Id == productDto.CategoryId).AnyAsync();
+            if (!categoryExists)
             {
-                await _mongoContext.Products.InsertOneAsync(product);
-                
-                return Ok(new { message = "Product saved successfully" });
- 
+                return BadRequest("Invalid CategoryId.");
+            }
+
+            var measurementUnitExists = await _mongoContext .Measuringunits.Find(x => x.Id == productDto.MeasurementUnitId).AnyAsync();
+            if (!measurementUnitExists)
+            {
+                return BadRequest("Invalid MeasurementUnitId.");
+            }
+
+            try{
+                var newProduct = new Product
+                {
+                    Name = productDto.Name,
+                    Code = productDto.Code,
+                    Price = productDto.Price,
+                    Cost = productDto.Cost,
+                    ReorderLevel = productDto.ReorderLevel,
+                    CategoryId = productDto.CategoryId,
+                    MeasurementUnitId = productDto.MeasurementUnitId,
+                    Description = productDto.Description,
+                    ItemPerCase = productDto.ItemPerCase ?? 0,
+                    SupplierId = productDto.SupplierId ?? "",
+                    ImageUrl = productDto.ImageUrl ?? "",
+                    IsActive = productDto.IsActive ?? true
+                };
+
+                await _mongoContext.Products.InsertOneAsync(newProduct);
+
+                return CreatedAtAction(nameof(GetProductById), new { id = newProduct.Id }, newProduct);
             }
             catch (System.Exception ex)
             {
+                _logger.LogError(ex, "Error in creating product");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProductById(string id)
+        {
+            if (!ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("Invalid product ID.");
+            }
+
+            try{
+                var product = await _mongoContext.Products.Find(p => p.Id == id).FirstOrDefaultAsync();
+                if (product == null)
+                {
+                    return NotFound("Product not found.");
+                }
+
+                return Ok(product);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in getting product by ID");
                 return BadRequest(ex.Message);
             }
         }

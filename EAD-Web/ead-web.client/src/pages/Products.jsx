@@ -73,6 +73,7 @@ const Products = () => {
   };
 
   const handleInputChange = (e) => {
+    setFormErrors({ ...formErrors, [e.target.name]: "" });
     const { name, value } = e.target;
     setNewProduct({ ...newProduct, [name]: value });
   };
@@ -141,7 +142,7 @@ const Products = () => {
         )
       );
     } else {
-      const newProduct = {
+      const data = {
         Name: newProduct.name,
         Description: newProduct.description,
         Code: newProduct.code,
@@ -153,15 +154,16 @@ const Products = () => {
         ReorderLevel: newProduct.reorderLevel,
         IsActive: newProduct.active,
         Image: newProduct.image,
+        SupplierId: "66fc3606342696db9557e652",
       };
 
-      const result = saveProduct(newProduct);
+      const result = saveProduct(data);
       if (result.error) {
         console.error("Error:", result.error);
         return;
       }
     }
-    handleModalClose();
+    // handleModalClose();
   };
 
   const handleDeleteProduct = (id) => {
@@ -235,12 +237,12 @@ const Products = () => {
         </thead>
         <tbody>
           {products.map((product) => (
-            <tr key={product.id.increment}>
+            <tr key={product.id}>
               <td>{product.name}</td>
               <td>{product.description}</td>
               <td>{product.code}</td>
-              <td>{product.categoryId}</td>
-              <td>{product.measurementUnitId}</td>
+              <td>{product.categoryName}</td>
+              <td>{product.measurementUnitName}</td>
               <td>{product.itemPerCase}</td>
               <td>{product.cost}</td>
               <td>${product.price}</td>
@@ -361,10 +363,7 @@ const Products = () => {
                   >
                     <option value=''>Select Category</option>
                     {categories.map((category) => (
-                      <option
-                        key={category.id.increment}
-                        value={category.id.increment}
-                      >
+                      <option key={category.id} value={category.id}>
                         {category.name}
                       </option>
                     ))}
@@ -386,7 +385,7 @@ const Products = () => {
                   >
                     <option value=''>Select UOM</option>
                     {uoms.map((uom) => (
-                      <option key={uom.id.increment} value={uom.id.increment}>
+                      <option key={uom.id} value={uom.id}>
                         {uom.unit}
                       </option>
                     ))}
