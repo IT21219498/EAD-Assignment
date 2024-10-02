@@ -1,6 +1,8 @@
 export const registerUser = async (registerModel) =>{
+
+
     try{
-        const response = await fetch('/api/Account/register', {
+        const response = await fetch('/api/User/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
