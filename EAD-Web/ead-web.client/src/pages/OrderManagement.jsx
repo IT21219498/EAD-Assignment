@@ -83,11 +83,11 @@ const OrderManagement = () => {
   };
 
   return (
-    <div className="container ">
-      <h2 className="d-flex justify-content-center">Orders</h2>
+    <div className='container '>
+      <h2 className='d-flex justify-content-center'>Orders</h2>
       <Button
-        variant="primary"
-        className="mb-3"
+        variant='primary'
+        className='mb-3'
         onClick={() => handleModalShow()}
       >
         New Order
@@ -139,7 +139,7 @@ const OrderManagement = () => {
       </Table>
 
       {/* Modal for Add/Edit Product */}
-      <Modal show={showModal} onHide={handleModalClose} size="xl">
+      <Modal show={showModal} onHide={handleModalClose} size='xl'>
         <Modal.Header closeButton>
           <Modal.Title>
             {editingProduct ? "Edit Product" : "Add New Product"}
@@ -149,48 +149,48 @@ const OrderManagement = () => {
           <Form>
             <Row>
               <Col md={4}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>InvoiceNo</Form.Label>
                   <Form.Control
-                    type="text"
-                    name="invoiceNo"
+                    type='text'
+                    name='invoiceNo'
                     value={newOrder.invoiceNo}
                     onChange={handleInputChange}
-                    placeholder="Enter product name"
+                    placeholder='Enter product name'
                   />
                 </Form.Group>
               </Col>
               <Col md={5}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>Description</Form.Label>
                   <Form.Control
-                    type="text"
-                    name="description"
+                    type='text'
+                    name='description'
                     value={newOrder.description}
                     onChange={handleInputChange}
-                    placeholder="Enter product description"
+                    placeholder='Enter product description'
                   />
                 </Form.Group>
               </Col>
               <Col md={2}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>Code</Form.Label>
                   <Form.Control
-                    type="text"
-                    name="code"
+                    type='text'
+                    name='code'
                     value={newOrder.code}
                     onChange={handleInputChange}
-                    placeholder="Enter product code"
+                    placeholder='Enter product code'
                   />
                 </Form.Group>
               </Col>
               <Col md={1}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>Status</Form.Label>
                   <Form.Check
-                    type="switch"
-                    id="active-switch"
-                    name="active"
+                    type='switch'
+                    id='active-switch'
+                    name='active'
                     checked={newOrder.active}
                     onChange={(e) =>
                       setNewOrder({ ...newOrder, active: e.target.checked })
@@ -201,14 +201,14 @@ const OrderManagement = () => {
             </Row>
             <Row>
               <Col md={4}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>Category</Form.Label>
                   <Form.Select
-                    name="category"
+                    name='category'
                     value={newOrder.category}
                     onChange={handleInputChange}
                   >
-                    <option value="">Select Category</option>
+                    <option value=''>Select Category</option>
                     {/* {categories.map((category) => (
                       <option
                         key={category.id.timestamp}
@@ -222,14 +222,14 @@ const OrderManagement = () => {
               </Col>
 
               <Col md={4}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>Unit of Measure</Form.Label>
                   <Form.Select
-                    name="uom"
+                    name='uom'
                     value={newOrder.uom}
                     onChange={handleInputChange}
                   >
-                    <option value="">Select UOM</option>
+                    <option value=''>Select UOM</option>
                     {/* {uoms.map((uom) => (
                       <option key={uom.id.timestamp} value={uom.id.timestamp}>
                         {uom.unit}
@@ -240,63 +240,63 @@ const OrderManagement = () => {
               </Col>
 
               <Col md={4}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>Item per Case</Form.Label>
                   <Form.Control
-                    type="number"
-                    name="itemPerCase"
+                    type='number'
+                    name='itemPerCase'
                     value={newOrder.itemPerCase}
                     onChange={handleInputChange}
-                    placeholder="Enter item per case"
+                    placeholder='Enter item per case'
                   />
                 </Form.Group>
               </Col>
             </Row>
             <Row>
               <Col md={4}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>Price</Form.Label>
                   <Form.Control
-                    type="number"
-                    name="price"
+                    type='number'
+                    name='price'
                     value={newOrder.price}
                     onChange={handleInputChange}
-                    placeholder="Enter product price"
+                    placeholder='Enter product price'
                   />
                 </Form.Group>
               </Col>
               <Col md={4}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>Cost</Form.Label>
                   <Form.Control
-                    type="number"
-                    name="cost"
+                    type='number'
+                    name='cost'
                     value={newOrder.cost}
                     onChange={handleInputChange}
-                    placeholder="Enter product cost"
+                    placeholder='Enter product cost'
                   />
                 </Form.Group>
               </Col>
               <Col md={4}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>Reorder Level</Form.Label>
                   <Form.Control
-                    type="number"
-                    name="reorderLevel"
+                    type='number'
+                    name='reorderLevel'
                     value={newOrder.reorderLevel}
                     onChange={handleInputChange}
-                    placeholder="Enter reorder level"
+                    placeholder='Enter reorder level'
                   />
                 </Form.Group>
               </Col>
             </Row>
             <Row>
               <Col md={4}>
-                <Form.Group className="mb-3">
+                <Form.Group className='mb-3'>
                   <Form.Label>Image</Form.Label>
                   <Form.Control
-                    type="file"
-                    name="image"
+                    type='file'
+                    name='image'
                     value={newOrder.image}
                     onChange={handleInputChange}
                   />
@@ -306,10 +306,10 @@ const OrderManagement = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleModalClose}>
+          <Button variant='secondary' onClick={handleModalClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSaveProduct}>
+          <Button variant='primary' onClick={handleSaveProduct}>
             {editingProduct ? "Update Product" : "Add Product"}
           </Button>
         </Modal.Footer>
