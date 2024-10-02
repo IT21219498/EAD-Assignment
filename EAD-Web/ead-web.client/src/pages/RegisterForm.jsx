@@ -7,7 +7,7 @@ import {
   MDBInput,
   MDBRadio 
 } from "mdb-react-ui-kit";
-import { registerUser } from "./Register"; // Import the registerUser function
+//import { registerUser } from "./Register"; // Import the registerUser function
 
 
 const RegisterForm = () => {
