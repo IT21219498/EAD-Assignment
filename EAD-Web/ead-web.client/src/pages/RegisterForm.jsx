@@ -1,14 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   MDBBtn,
   MDBContainer,
   MDBRow,
   MDBCol,
   MDBInput,
-  MDBRadio 
+  MDBRadio,
+  MDBValidation,
+  MDBValidationItem,
 } from "mdb-react-ui-kit";
-import { registerUser } from "./Register"; // Import the registerUser function
 
+import { registerUser } from "../apis/register";
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -18,18 +20,18 @@ const RegisterForm = () => {
     address: "",
     password: "",
     confirmPassword: "",
-    role: "Vendor", // Default value
+    role: "Vendor",
   });
 
-    // Handle input changes
-    const handleChange = (e) => {
-      setFormData({
-        ...formData,
-        [e.target.id]: e.target.value,
-      });
-    };
+  // Handle input changes
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
 
-      // Handle role change for radio buttons
+  // Handle role change for radio buttons
   const handleRoleChange = (e) => {
     setFormData({
       ...formData,
@@ -37,23 +39,33 @@ const RegisterForm = () => {
     });
   };
 
-    // Handle form submission
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      // Check if passwords match before calling registerUser
-      if (formData.password !== formData.confirmPassword) {
-        alert("Passwords do not match!");
-        return;
-      }
-  
-      try {
-        await registerUser(formData); // Pass form data to registerUser
-      } catch (error) {
-        console.error("Registration failed:", error);
-      }
-    };
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Check if passwords match
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    // Create a new object excluding confirmPassword
+    const { confirmPassword, ...dataToSend } = formData;
+
+    console.log("dataToSend",dataToSend);
+
+    try {
+      await registerUser(dataToSend); // Register user with form data
+      alert("Registration successful!");
+    } catch (error) {
+      console.error("Registration failed:", error);
+    }
+  };
 
   return (
+    <MDBValidation>
+      <MDBValidationItem>
+
     <MDBContainer className="my-5 gradient-form">
       <form onSubmit={handleSubmit}>
         <MDBRow>
@@ -75,6 +87,7 @@ const RegisterForm = () => {
                 type="text"
                 value={formData.fullName}
                 onChange={handleChange}
+                required
               />
               <MDBInput
                 wrapperClass="mb-4"
@@ -163,6 +176,8 @@ const RegisterForm = () => {
         </MDBRow>
       </form>
     </MDBContainer>
+    </MDBValidationItem>
+    </MDBValidation>
   );
 };
 
