@@ -1,7 +1,17 @@
 import { useContext, useEffect, useState } from "react";
-import { Table, Form, Button, Modal, Row, Col } from "react-bootstrap";
+import {
+  Table,
+  Form,
+  Button,
+  Modal,
+  Row,
+  Col,
+  OverlayTrigger,
+  Tooltip,
+} from "react-bootstrap";
 import { FaEdit } from "react-icons/fa";
 import { RiDeleteBin5Line } from "react-icons/ri";
+import { AiOutlineCheck, AiOutlineClose } from "react-icons/ai";
 import {
   fetchProducts,
   fetchCategories,
@@ -14,6 +24,7 @@ import {
 } from "../apis/products";
 import ToastContext from "../contexts/ToastContext";
 import ConfirmAction from "../components/ConfirmAction";
+import { Pagination } from "react-bootstrap";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -56,6 +67,13 @@ const Products = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [actionType, setActionType] = useState("");
   const [selectedProductId, setSelectedProductId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Number of products to show per page
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+  const totalPages = Math.ceil(products.length / itemsPerPage);
 
   useEffect(() => {
     Promise.all([loadProducts(), loadCategories(), loadUOMs()]);
@@ -137,7 +155,7 @@ const Products = () => {
         products.find((p) => p.id === selectedProductId)
       );
     }
-    setShowConfirm(false); // Close confirm modal
+    setShowConfirm(false);
   };
 
   const handleInputChange = (e) => {
@@ -305,7 +323,7 @@ const Products = () => {
       return;
     }
     try {
-      const result = await updateProductStatus(product.id, !product.active);
+      const result = await updateProductStatus(product.id, !product.isActive);
       if (result.error) {
         handleShowToast("Error", result.error, "danger");
         console.error("Error:", result.error);
@@ -353,7 +371,7 @@ const Products = () => {
 
   return (
     <div className='container '>
-      {/* <h2 className='d-flex justify-content-center'>Products</h2> */}
+      <h2 className='d-flex justify-content-center'>Products</h2>
       <Button
         variant='primary'
         className='mb-3'
@@ -365,56 +383,114 @@ const Products = () => {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Product Name</th>
-            <th>Description</th>
-            <th>Code</th>
-            <th>Category</th>
-            <th>UOM</th>
-            <th>Item per Case</th>
-            <th>Cost</th>
-            <th>Price</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th className='text-center'>Product Name</th>
+            <th className='text-center'>Description</th>
+            <th className='text-center'>Code</th>
+            <th className='text-center'>Category</th>
+            <th className='text-center'>UOM</th>
+            <th className='text-center'>Item per Case</th>
+            <th className='text-center'>Cost</th>
+            <th className='text-center'>Price</th>
+            <th className='text-center'>Status</th>
+            <th className='text-center'>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {products.map((product) => (
+          {currentProducts.map((product) => (
             <tr key={product.id}>
               <td>{product.name}</td>
               <td>{product.description}</td>
               <td>{product.code}</td>
               <td>{product.categoryName}</td>
               <td>{product.measurementUnitName}</td>
-              <td>{product.itemPerCase}</td>
-              <td>{product.cost}</td>
-              <td>${product.price}</td>
-              <td>{product.isActive ? "Active" : "Inactive"}</td>
-              <td>
-                <Button
-                  variant={product.active ? "danger" : "success"}
-                  onClick={() => handleShowConfirm("updateStatus", product.id)}
-                  className='me-2'
+              <td className='text-end'>{product.itemPerCase}</td>
+              <td className='text-end'>{Number(product.cost).toFixed(2)}</td>
+              <td className='text-end'>{Number(product.price).toFixed(2)}</td>
+              <td className='text-center'>
+                {product.isActive ? "Active" : "Inactive"}
+              </td>
+              <td className='text-center'>
+                <OverlayTrigger
+                  placement='top'
+                  overlay={
+                    <Tooltip>
+                      {product.isActive
+                        ? "Deactivate Product"
+                        : "Activate Product"}
+                    </Tooltip>
+                  }
                 >
-                  {product.active ? "Deactivate" : "Activate"}
-                </Button>
-                <Button
-                  variant='secondary'
-                  onClick={() => handleModalShow(product)}
-                  className='mx-2'
+                  <Button
+                    variant={
+                      product.isActive ? "outline-danger" : "outline-success"
+                    }
+                    onClick={() =>
+                      handleShowConfirm("updateStatus", product.id)
+                    }
+                    className='me-2'
+                  >
+                    {product.isActive ? <AiOutlineClose /> : <AiOutlineCheck />}
+                  </Button>
+                </OverlayTrigger>
+
+                <OverlayTrigger
+                  placement='top'
+                  overlay={<Tooltip>Edit Product</Tooltip>}
                 >
-                  <FaEdit />
-                </Button>
-                <Button
-                  variant='danger'
-                  onClick={() => handleShowConfirm("delete", product.id)}
+                  <Button
+                    variant='outline-secondary'
+                    onClick={() => handleModalShow(product)}
+                    className='mx-2'
+                  >
+                    <FaEdit />
+                  </Button>
+                </OverlayTrigger>
+
+                <OverlayTrigger
+                  placement='top'
+                  overlay={<Tooltip>Delete Product</Tooltip>}
                 >
-                  <RiDeleteBin5Line />
-                </Button>
+                  <Button
+                    variant='outline-danger'
+                    onClick={() => handleShowConfirm("delete", product.id)}
+                  >
+                    <RiDeleteBin5Line />
+                  </Button>
+                </OverlayTrigger>
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
+      <Pagination className='justify-content-center'>
+        <Pagination.First
+          onClick={() => handlePageChange(1)}
+          disabled={currentPage === 1}
+        />
+        <Pagination.Prev
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        />
+
+        {[...Array(totalPages)].map((_, i) => (
+          <Pagination.Item
+            key={i + 1}
+            active={i + 1 === currentPage}
+            onClick={() => handlePageChange(i + 1)}
+          >
+            {i + 1}
+          </Pagination.Item>
+        ))}
+
+        <Pagination.Next
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        />
+        <Pagination.Last
+          onClick={() => handlePageChange(totalPages)}
+          disabled={currentPage === totalPages}
+        />
+      </Pagination>
 
       {/* Modal for Add/Edit Product */}
       <Modal show={showModal} onHide={handleModalClose} size='xl'>
@@ -644,7 +720,7 @@ const Products = () => {
         message={
           actionType === "delete"
             ? "This will permanently delete the product."
-            : "This will change the product's active status."
+            : "This will change the product's status."
         }
         confirmLabel={actionType === "delete" ? "Delete" : "Yes, Update"}
         confirmVariant={actionType === "delete" ? "danger" : "primary"}
