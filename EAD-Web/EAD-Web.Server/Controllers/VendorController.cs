@@ -44,7 +44,7 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
-        [HttpGet("get")]
+        [HttpGet("allVendors")]
         public async Task<ActionResult<IEnumerable<Vendor>>> GetAllVendors()
         {
             try
