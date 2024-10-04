@@ -1,5 +1,6 @@
 ﻿using EAD_Web.Server.Models;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
 
 namespace EAD_Web.Server.Controllers
 {
@@ -36,9 +37,30 @@ namespace EAD_Web.Server.Controllers
                 await _mongoContext.Vendors.InsertOneAsync(vendor);
                 return Ok("Vendor created successfully.");
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 _logger.LogError(ex, "Error in creating product");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("get")]
+        public async Task<ActionResult<IEnumerable<Vendor>>> GetAllVendors()
+        {
+            try
+            {
+                var vendors = await _mongoContext.Vendors.Find(_ => true).ToListAsync();
+
+                if (vendors.Count == 0)
+                {
+                    return NoContent();
+                }
+
+                return Ok(vendors);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in getting all vendors");
                 return BadRequest(ex.Message);
             }
         }
