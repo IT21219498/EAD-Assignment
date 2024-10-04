@@ -52,7 +52,8 @@ namespace EAD_Web.Server.Controllers
                         MeasurementUnitName = measuringUnit.Unit,
                         Description = product.Description,
                         ItemPerCase = product.ItemPerCase,
-                        ImageUrl = product.ImageUrl
+                        ImageUrl = product.ImageUrl,
+                        IsActive = product.IsActive 
                     });
                 }
 
@@ -162,6 +163,113 @@ namespace EAD_Web.Server.Controllers
             catch (System.Exception ex)
             {
                 _logger.LogError(ex, "Error in getting product by ID");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateProduct(string id, [FromBody] ProductDto productDto)
+        {
+            if (!ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("Invalid product ID.");
+            }
+
+            // Validate if category and measurement unit exist before creation
+            var categoryExists = await _mongoContext.Categories.Find(x => x.Id == productDto.CategoryId).AnyAsync();
+            if (!categoryExists)
+            {
+                return BadRequest("Invalid CategoryId.");
+            }
+
+            var measurementUnitExists = await _mongoContext.Measuringunits.Find(x => x.Id == productDto.MeasurementUnitId).AnyAsync();
+            if (!measurementUnitExists)
+            {
+                return BadRequest("Invalid MeasurementUnitId.");
+            }
+
+            try{
+                var product = await _mongoContext.Products.Find(p => p.Id == id).FirstOrDefaultAsync();
+                if (product == null)
+                {
+                    return NotFound("Product not found.");
+                }
+
+                product.Name = productDto.Name;
+                product.Code = productDto.Code;
+                product.Price = productDto.Price;
+                product.Cost = productDto.Cost;
+                product.ReorderLevel = productDto.ReorderLevel;
+                product.CategoryId = productDto.CategoryId;
+                product.MeasurementUnitId = productDto.MeasurementUnitId;
+                product.Description = productDto.Description;
+                product.ItemPerCase = productDto.ItemPerCase ?? 0;
+                product.SupplierId = productDto.SupplierId ?? "";
+                product.ImageUrl = productDto.ImageUrl ?? "";
+                product.IsActive = productDto.IsActive ?? true;
+
+                await _mongoContext.Products.ReplaceOneAsync(p => p.Id == id, product);
+
+                return Ok(product);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in updating product");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProduct(string id)
+        {
+            if (!ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("Invalid product ID.");
+            }
+
+            try{
+                var product = await _mongoContext.Products.Find(p => p.Id == id).FirstOrDefaultAsync();
+                if (product == null)
+                {
+                    return NotFound("Product not found.");
+                }
+
+                await _mongoContext.Products.DeleteOneAsync(p => p.Id == id);
+
+                return Ok("Product deleted successfully.");
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in deleting product");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        //update product status
+        [HttpPut("updatestatus/{id}/{isActive}")]
+        public async Task<IActionResult> UpdateProductStatus(string id,bool isActive)
+        {
+            if (!ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("Invalid product ID.");
+            }
+
+            try{
+                var product = await _mongoContext.Products.Find(p => p.Id == id).FirstOrDefaultAsync();
+                if (product == null)
+                {
+                    return NotFound("Product not found.");
+                }
+
+                product.IsActive = isActive;
+
+                await _mongoContext.Products.ReplaceOneAsync(p => p.Id == id, product);
+
+                return Ok(product);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in updating product status");
                 return BadRequest(ex.Message);
             }
         }

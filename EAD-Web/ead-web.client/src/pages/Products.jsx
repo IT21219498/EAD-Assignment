@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Table, Form, Button, Modal, Row, Col } from "react-bootstrap";
 import { FaEdit } from "react-icons/fa";
 import { RiDeleteBin5Line } from "react-icons/ri";
@@ -7,7 +7,13 @@ import {
   fetchCategories,
   fetchUOMs,
   saveProduct,
+  getSelectedProduct,
+  deleteProduct,
+  updateProduct,
+  updateProductStatus,
 } from "../apis/products";
+import ToastContext from "../contexts/ToastContext";
+import ConfirmAction from "../components/ConfirmAction";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -40,16 +46,35 @@ const Products = () => {
     reorderLevel: "",
     image: "",
   });
+  const {
+    setShowToast,
+    setToastTitle,
+    setToastVariant,
+    setToastMessage,
+    setToastPosition,
+  } = useContext(ToastContext);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [actionType, setActionType] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState(null);
 
   useEffect(() => {
     Promise.all([loadProducts(), loadCategories(), loadUOMs()]);
   }, []);
+
+  const handleShowToast = (title, message, variant) => {
+    setShowToast(true);
+    setToastTitle(title);
+    setToastMessage(message);
+    setToastVariant(variant);
+    setToastPosition("top-end");
+  };
 
   const loadProducts = async () => {
     try {
       const data = await fetchProducts();
       setProducts(data);
     } catch (error) {
+      handleShowToast("Error", error.message, "danger");
       console.error("Error:", error);
     }
   };
@@ -59,6 +84,7 @@ const Products = () => {
       const data = await fetchCategories();
       setCategories(data);
     } catch (error) {
+      handleShowToast("Error", error.message, "danger");
       console.error("Error:", error);
     }
   };
@@ -68,8 +94,50 @@ const Products = () => {
       const data = await fetchUOMs();
       setUoms(data);
     } catch (error) {
+      handleShowToast("Error", error.message, "danger");
       console.error("Error:", error);
     }
+  };
+
+  const loadSelectedProduct = async (id) => {
+    try {
+      const data = await getSelectedProduct(id);
+      const product = {
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        code: data.code,
+        category: data.categoryId,
+        uom: data.measurementUnitId,
+        itemPerCase: data.itemPerCase,
+        price: data.price,
+        cost: data.cost,
+        reorderLevel: data.reorderLevel,
+        active: data.isActive,
+        image: data.image,
+      };
+      setNewProduct(product);
+    } catch (error) {
+      handleShowToast("Error", error.message, "danger");
+      console.error("Error:", error);
+    }
+  };
+
+  const handleShowConfirm = (type, id) => {
+    setActionType(type);
+    setSelectedProductId(id);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (actionType === "delete") {
+      await handleDeleteProduct(selectedProductId);
+    } else if (actionType === "updateStatus") {
+      await toggleProductStatus(
+        products.find((p) => p.id === selectedProductId)
+      );
+    }
+    setShowConfirm(false); // Close confirm modal
   };
 
   const handleInputChange = (e) => {
@@ -87,10 +155,10 @@ const Products = () => {
 
   const handleModalShow = (product = null) => {
     if (product) {
-      setEditingProduct(product);
-      setNewProduct(product);
+      loadSelectedProduct(product.id);
     }
     setShowModal(true);
+    setEditingProduct(product);
   };
 
   const validateForm = () => {
@@ -131,18 +199,54 @@ const Products = () => {
     return isValid;
   };
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!validateForm()) {
       return;
     }
-    if (editingProduct) {
-      setProducts(
-        products.map((product) =>
-          product.id === editingProduct.id ? newProduct : product
-        )
-      );
-    } else {
+    try {
+      if (editingProduct) {
+        handleUpdateProduct();
+      } else {
+        const data = {
+          Name: newProduct.name,
+          Description: newProduct.description,
+          Code: newProduct.code,
+          CategoryId: newProduct.category,
+          MeasurementUnitId: newProduct.uom,
+          ItemPerCase: newProduct.itemPerCase,
+          Price: newProduct.price,
+          Cost: newProduct.cost,
+          ReorderLevel: newProduct.reorderLevel,
+          IsActive: newProduct.active,
+          Image: newProduct.image,
+          SupplierId: "66fc3606342696db9557e652",
+        };
+
+        const result = await saveProduct(data);
+        if (result.error) {
+          handleShowToast("Error", result.error, "danger");
+          console.error("Error:", result.error);
+          return;
+        } else {
+          handleShowToast("Success", "Product added successfully", "success");
+          // handleModalClose();
+          loadProducts();
+        }
+      }
+    } catch (error) {
+      handleShowToast("Error", error.message, "danger");
+      console.error("Error:", error);
+    }
+  };
+
+  const handleUpdateProduct = async () => {
+    if (editingProduct === null) {
+      handleShowToast("Error", "Product not found", "danger");
+      return;
+    }
+    try {
       const data = {
+        Id: editingProduct.id,
         Name: newProduct.name,
         Description: newProduct.description,
         Code: newProduct.code,
@@ -157,25 +261,63 @@ const Products = () => {
         SupplierId: "66fc3606342696db9557e652",
       };
 
-      const result = saveProduct(data);
+      const result = await updateProduct(data);
       if (result.error) {
+        handleShowToast("Error", result.error, "danger");
         console.error("Error:", result.error);
         return;
+      } else {
+        handleShowToast("Success", "Product updated successfully", "success");
+        handleModalClose();
+        await loadProducts();
       }
+    } catch (error) {
+      handleShowToast("Error", error.message, "danger");
+      console.error("Error:", error);
     }
-    // handleModalClose();
   };
 
-  const handleDeleteProduct = (id) => {
-    setProducts(products.filter((product) => product.id !== id));
+  const handleDeleteProduct = async (id) => {
+    if (id === null) {
+      handleShowToast("Error", "Product not found", "danger");
+      return;
+    }
+    try {
+      const result = await deleteProduct(id);
+      console.log("🚀 ~ handleDeleteProduct ~ result:", result);
+      if (result.error) {
+        handleShowToast("Error", result.error, "danger");
+        console.error("Error:", result.error);
+        return;
+      } else {
+        handleShowToast("Success", "Product deleted successfully", "success");
+        await loadProducts();
+      }
+    } catch (error) {
+      handleShowToast("Error", error.message, "danger");
+      console.error("Error:", error);
+    }
   };
 
-  const toggleProductStatus = (id) => {
-    setProducts(
-      products.map((product) =>
-        product.id === id ? { ...product, active: !product.active } : product
-      )
-    );
+  const toggleProductStatus = async (product) => {
+    if (product.id === null) {
+      handleShowToast("Error", "Product not found", "danger");
+      return;
+    }
+    try {
+      const result = await updateProductStatus(product.id, !product.active);
+      if (result.error) {
+        handleShowToast("Error", result.error, "danger");
+        console.error("Error:", result.error);
+        return;
+      } else {
+        handleShowToast("Success", "Product status updated", "success");
+        await loadProducts();
+      }
+    } catch (error) {
+      handleShowToast("Error", error.message, "danger");
+      console.error("Error:", error);
+    }
   };
 
   const handleReset = () => {
@@ -211,7 +353,7 @@ const Products = () => {
 
   return (
     <div className='container '>
-      <h2 className='d-flex justify-content-center'>Products</h2>
+      {/* <h2 className='d-flex justify-content-center'>Products</h2> */}
       <Button
         variant='primary'
         className='mb-3'
@@ -250,7 +392,7 @@ const Products = () => {
               <td>
                 <Button
                   variant={product.active ? "danger" : "success"}
-                  onClick={() => toggleProductStatus(product.id)}
+                  onClick={() => handleShowConfirm("updateStatus", product.id)}
                   className='me-2'
                 >
                   {product.active ? "Deactivate" : "Activate"}
@@ -264,7 +406,7 @@ const Products = () => {
                 </Button>
                 <Button
                   variant='danger'
-                  onClick={() => handleDeleteProduct(product.id)}
+                  onClick={() => handleShowConfirm("delete", product.id)}
                 >
                   <RiDeleteBin5Line />
                 </Button>
@@ -494,6 +636,19 @@ const Products = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      <ConfirmAction
+        show={showConfirm}
+        onHide={() => setShowConfirm(false)}
+        onConfirm={handleConfirmAction}
+        title='Are you sure?'
+        message={
+          actionType === "delete"
+            ? "This will permanently delete the product."
+            : "This will change the product's active status."
+        }
+        confirmLabel={actionType === "delete" ? "Delete" : "Yes, Update"}
+        confirmVariant={actionType === "delete" ? "danger" : "primary"}
+      />
     </div>
   );
 };
