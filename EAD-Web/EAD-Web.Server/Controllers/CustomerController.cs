@@ -205,10 +205,61 @@ namespace EAD_Web.Server.Controllers
                 Email = c.Email
             }).ToList();
 
-            // Log the number of pending customers found
-            Console.WriteLine($"{pendingCustomers.Count} customers pending activation found.");
+        
 
             return Ok(pendingCustomerDtos); // Return the DTO with CustomerId included
+        }
+
+        [HttpGet("deactivated")]
+        public async Task<IActionResult> GetAllDeactivatedCustomers()
+        {
+            var filter = Builders<Customer>.Filter.And(
+                Builders<Customer>.Filter.Eq(c => c.IsActive, false),
+                Builders<Customer>.Filter.Eq(c => c.HasBeenActivated, true)
+            );
+
+            var deactivatedCustomers = await _customers.Find(filter).ToListAsync();
+
+            if (deactivatedCustomers.Count == 0)
+            {
+                return NotFound("No deactivated customers found.");
+            }
+            var deactivatedCustomersDTOs = deactivatedCustomers.Select(c => new PendingCustomerDTO
+            {
+                CustomerId = c.CustomerId.ToString(),
+                FullName = c.FullName,
+                Email = c.Email
+            }).ToList();
+
+            return Ok(deactivatedCustomersDTOs);
+        }
+
+        [HttpPost("reactivate/{customerId}")]
+        public async Task<IActionResult> ReactivateCustomer(string customerId)
+        {
+            if (!ObjectId.TryParse(customerId, out var objectId))
+            {
+                return BadRequest("Invalid customer ID format.");
+            }
+
+            var filter = Builders<Customer>.Filter.And(
+                Builders<Customer>.Filter.Eq(c => c.CustomerId, objectId),
+                Builders<Customer>.Filter.Eq(c => c.IsActive, false),
+                Builders<Customer>.Filter.Eq(c => c.HasBeenActivated, true)
+            );
+
+            var update = Builders<Customer>.Update
+                .Set(c => c.IsActive, true)
+                .Set(c => c.UpdatedAt, DateTime.UtcNow);
+
+            var result = await _customers.UpdateOneAsync(filter, update);
+
+            if (result.MatchedCount == 0)
+            {
+                return NotFound("Customer not found or already active.");
+            }
+
+            return Ok("Customer reactivated successfully.");
         }
 
 

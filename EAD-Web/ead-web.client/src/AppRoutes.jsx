@@ -7,6 +7,8 @@ import RegisterForm from "./pages/RegisterForm";
 import OrderManagement from "./pages/OrderManagement";
 import Vendor from "./pages/Vendor";
 import PendingUsers from "./pages/PendingUsers";
+import CustomerActivation from "./pages/CustomerActivation";
+import ReActivateCustomer from "./pages/ReActivateCustomer";
 
 const AppRoutes = () => {
   return (
@@ -19,6 +21,8 @@ const AppRoutes = () => {
       <Route path="/OrderManagement" element={<OrderManagement />} /> 
       <Route path='/Vendor' element={<Vendor />} /> 
       <Route path='/PendingUsers' element={<PendingUsers/>} />  
+      <Route path='/CustomerActivation' element={<CustomerActivation/>}/>
+      <Route path='/ReActivateCustomer' element={<ReActivateCustomer/>}/>
       </Routes>
   );
 };
