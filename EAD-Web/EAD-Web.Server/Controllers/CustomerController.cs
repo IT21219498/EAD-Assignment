@@ -140,15 +140,15 @@ namespace EAD_Web.Server.Controllers
                 .Set(c => c.IsActive, false)
                 .Set(c => c.UpdatedAt, DateTime.UtcNow);
 
-        //    var result = await _customers.UpdateOneAsync(filter, update);
+           var result = await _customers.UpdateOneAsync(filter, update);
 
-        //    if (result.MatchedCount == 0)
-        //    {
-        //        return NotFound("Customer not found");
-        //    }
+            if (result.MatchedCount == 0)
+            {
+                return NotFound("Customer not found");
+            }
 
-        //    return Ok("Customer account deactivated successfully.");
-        //}
+            return Ok("Customer account deactivated successfully.");
+        }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDTO model)
