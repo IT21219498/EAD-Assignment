@@ -39,16 +39,6 @@ const OrderManagement = () => {
     defaultPaginationDetails
   );
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setShowSpinner(true);
-      await Promise.all([loadOrders(), loadCustomers(), loadInvoiceNo()]);
-      setShowSpinner(false);
-    };
-
-    fetchData();
-  }, [loadOrders, loadCustomers, loadInvoiceNo]);
-
   const loadOrders = useCallback(
     async (search, page = 1, pageSize = 5, searchcolumn) => {
       if (!search) {
@@ -62,29 +52,27 @@ const OrderManagement = () => {
           if (!showModal) handleToastShow(data.message, "danger");
           setOrders([]);
           setOrderPaginationData(defaultPaginationDetails);
-          setShowSpinner(false);
+
           return;
         }
         if (data.data.length === 0) {
           if (!showModal)
             handleToastShow("No outlets found", "warning", "Warning");
           setOrders([]);
-          setShowSpinner(false);
+
           return;
         }
         setOrders(data.data);
-        setOrderPaginationData({
-          page: data.page,
-          pageSize: data.page_size,
-          totalPages: data.total_pages,
-          totalItems: data.total_customers,
-        });
+        // setOrderPaginationData({
+        //   page: data.page,
+        //   pageSize: data.page_size,
+        //   totalPages: data.total_pages,
+        //   totalItems: data.total_customers,
+        // });
       } catch (err) {
         setOrders([]);
         console.error(err.message);
         handleToastShow("Error loading outlets", "danger");
-      } finally {
-        setShowSpinner(false);
       }
     },
     []
@@ -95,14 +83,7 @@ const OrderManagement = () => {
       if (data.status === "NOK") {
         if (!showModal) handleToastShow(data.message, "danger");
         setNewOrder((prev) => ({ ...prev, invoiceNo: "" }));
-        setShowSpinner(false);
-        return;
-      }
-      if (data.data.length === 0) {
-        if (!showModal)
-          handleToastShow("No outlets found", "warning", "Warning");
-        setNewOrder((prev) => ({ ...prev, invoiceNo: "" }));
-        setShowSpinner(false);
+
         return;
       }
       setNewOrder((prev) => ({ ...prev, invoiceNo: data.data }));
@@ -110,24 +91,23 @@ const OrderManagement = () => {
       setOrders([]);
       console.error(err.message);
       handleToastShow("Error loading outlets", "danger");
-    } finally {
-      setShowSpinner(false);
     }
   }, []);
+
   const loadCustomers = useCallback(async () => {
     try {
       const data = await fetchCustomers();
       if (data.status === "NOK") {
         if (!showModal) handleToastShow(data.message, "danger");
         setCustomers([]);
-        setShowSpinner(false);
+
         return;
       }
       if (data.data.length === 0) {
         if (!showModal)
           handleToastShow("No outlets found", "warning", "Warning");
         setCustomers([]);
-        setShowSpinner(false);
+
         return;
       }
       setCustomers(data.data);
@@ -135,8 +115,6 @@ const OrderManagement = () => {
       setCustomers([]);
       console.error(err.message);
       handleToastShow("Error loading outlets", "danger");
-    } finally {
-      setShowSpinner(false);
     }
   }, []);
 
@@ -154,7 +132,7 @@ const OrderManagement = () => {
   const handleModalShow = (product = null) => {
     setNewOrder({
       ...newOrder,
-      invoiceNo: fetchMaxInvoice(),
+      invoiceNo: loadInvoiceNo(),
     });
     if (product) {
       setEditingOrder(product);
@@ -202,6 +180,16 @@ const OrderManagement = () => {
     setToastMessage(null);
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setShowSpinner(true);
+      await Promise.all([loadOrders(), loadCustomers(), loadInvoiceNo()]);
+      setShowSpinner(false);
+    };
+
+    fetchData();
+  }, [loadOrders, loadCustomers, loadInvoiceNo]);
+
   return (
     <>
       {showToast && (
@@ -240,7 +228,7 @@ const OrderManagement = () => {
               <p className="mt-1">Please Wait...</p>
             </div>
           )}
-          {!showSpinner && orders.length === 0 && (
+          {!showSpinner && orders && orders.length != 0 && (
             <tbody>
               {orders.map((order) => (
                 <tr key={order.id}>
@@ -321,26 +309,26 @@ const OrderManagement = () => {
                   <Form.Group className="mb-3">
                     <Form.Label>Order Date</Form.Label>
                     <Form.Control
-                      type="text"
-                      name="code"
-                      value={newOrder.code}
+                      type="date"
+                      name="orderDate"
+                      value={newOrder.orderDate}
                       onChange={handleInputChange}
-                      placeholder="Enter product code"
                     />
                   </Form.Group>
                 </Col>
                 <Col md={1}>
                   <Form.Group className="mb-3">
                     <Form.Label>Status</Form.Label>
-                    <Form.Check
-                      type="switch"
-                      id="active-switch"
-                      name="active"
-                      checked={newOrder.active}
-                      onChange={(e) =>
-                        setNewOrder({ ...newOrder, active: e.target.checked })
-                      }
-                    />
+                    <Form.Select
+                      name="status"
+                      value={newOrder.status}
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Select Status</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </Form.Select>
                   </Form.Group>
                 </Col>
               </Row>

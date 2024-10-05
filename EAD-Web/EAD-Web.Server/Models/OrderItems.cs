@@ -12,7 +12,7 @@ namespace EAD_Web.Server.Models
 
         [BsonElement("orderId")]
         [BsonRepresentation(BsonType.ObjectId)]
-        public ObjectId OrderId { get; set; }  // Foreign key linking to Orders collection
+        public string OrderId { get; set; }  // Foreign key linking to Orders collection, changed to string
 
         [BsonElement("productId")]
         [BsonRepresentation(BsonType.ObjectId)]

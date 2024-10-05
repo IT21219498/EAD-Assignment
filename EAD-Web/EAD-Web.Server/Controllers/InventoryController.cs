@@ -38,6 +38,7 @@ namespace EAD_Web.Server.Controllers
                         Id = stock.Id,
                         ProductId = stock.ProductId,
                         ProductName = _context.Products.Find(product => product.Id == stock.ProductId).FirstOrDefault().Name,
+                        SellingPrice = _context.Products.Find(product => product.Id == stock.ProductId).FirstOrDefault().Price,
                         Quantity = stock.Quantity
                     });
                 }
@@ -52,12 +53,30 @@ namespace EAD_Web.Server.Controllers
 
         //get stocks that are below the minimum quantity, minimu is set to 10
         [HttpGet("getlowstock")]
-        public async Task<ActionResult<List<Stock>>> GetLowStock()
+        public async Task<ActionResult<List<StockDTO>>> GetLowStock()
         {
             try
             {
-                var stocks = await _context.Stock.Find(stock => stock.Quantity < 10).ToListAsync();
-                return Ok(stocks);
+                var stocks = await _context.Stock.Find(stock => stock.Quantity < 10 
+                    && stock.IsActive == true
+                ).ToListAsync();
+
+                var stockDTOs = new List<StockDTO>();
+
+                foreach (var stock in stocks)
+                {
+                    stockDTOs.Add(new StockDTO
+                    {
+                        Id = stock.Id,
+                        ProductId = stock.ProductId,
+                        ProductName = _context.Products.Find(product => product.Id == stock.ProductId).FirstOrDefault().Name,
+                        SellingPrice = _context.Products.Find(product => product.Id == stock.ProductId).FirstOrDefault().Price,
+                        Quantity = stock.Quantity
+                    });
+                }
+
+
+                return Ok(stockDTOs);
             }
             catch (Exception ex)
             {
@@ -85,6 +104,28 @@ namespace EAD_Web.Server.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in updating stock");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        //delete stock
+        [HttpDelete("deletestock/{id}")]
+        public async Task<ActionResult> DeleteStock(string id)
+        {
+            try
+            {
+                var stock = await _context.Stock.Find(stock => stock.Id == id).FirstOrDefaultAsync();
+                if (stock == null)
+                {
+                    return NotFound("Stock not found");
+                }
+                stock.IsActive = false;
+                await _context.Stock.ReplaceOneAsync(stock => stock.Id == id, stock);
+                return Ok("Stock deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in deleting stock");
                 return StatusCode(500, "Internal server error");
             }
         }
