@@ -12,7 +12,8 @@ const Layout = ({ children }) => {
   return (
     <>
       <NavigationBar userRole={userRole} />
-      <main className='container mt-4'>{children}</main>
+
+      <main className=' mt-4'>{children}</main>
     </>
   );
 };
