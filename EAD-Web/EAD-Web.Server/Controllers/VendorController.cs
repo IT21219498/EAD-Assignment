@@ -117,6 +117,40 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
+        [HttpPut("{vendorName}")]
+        public async Task<IActionResult> UpdateVendorByName(string vendorName, [FromBody] Vendor updatedVendor)
+        {
+            if (string.IsNullOrEmpty(vendorName))
+            {
+                return BadRequest("Vendor name cannot be empty.");
+            }
+
+            try
+            {
+                var existingVendor = await _mongoContext.Vendors.Find(v => v.vendorName.ToLower() == vendorName.ToLower()).FirstOrDefaultAsync();
+                if (existingVendor == null)
+                {
+                    return NotFound("Vendor not found.");
+                }
+
+                // Update the vendor details directly with the updated vendor object
+                existingVendor.vendorName = updatedVendor.vendorName;
+                existingVendor.address = updatedVendor.address;
+                existingVendor.contactName = updatedVendor.contactName;
+                existingVendor.contactNo = updatedVendor.contactNo;
+                existingVendor.email = updatedVendor.email;
+                existingVendor.category = updatedVendor.category;
+
+                await _mongoContext.Vendors.ReplaceOneAsync(v => v.Id == existingVendor.Id, existingVendor);
+
+                return Ok(existingVendor);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in updating vendor");
+                return BadRequest(ex.Message);
+            }
+        }
 
     }
 }
