@@ -90,5 +90,33 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
+        [HttpDelete("{vendorName}")]
+        public async Task<IActionResult> DeleteVendorByName(string vendorName)
+        {
+            if (string.IsNullOrEmpty(vendorName))
+            {
+                return BadRequest("Vendor name cannot be empty.");
+            }
+
+            try
+            {
+                var vendor = await _mongoContext.Vendors.Find(v => v.vendorName.ToLower() == vendorName.ToLower()).FirstOrDefaultAsync();
+                if (vendor == null)
+                {
+                    return NotFound("Vendor not found.");
+                }
+
+                await _mongoContext.Vendors.DeleteOneAsync(v => v.Id == vendor.Id);
+
+                return Ok("Vendor deleted successfully.");
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in deleting vendor");
+                return BadRequest(ex.Message);
+            }
+        }
+
+
     }
 }
