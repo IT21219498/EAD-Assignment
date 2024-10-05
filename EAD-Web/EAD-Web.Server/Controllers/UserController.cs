@@ -6,93 +6,13 @@ using System.Threading.Tasks;
 using System;
 using Microsoft.AspNetCore.Identity;
 using EAD_Web.Server.DTOs;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using MongoDB.Driver.Linq;
 
-/*
 
-namespace EAD_Web.Server.Controllers
-{
-    [ApiController]
-    [Route("api/[controller]")]
-    public class UserController : ControllerBase
-    {
-        private readonly MongoDBContext _mongoContext;
-
-        public UserController(MongoDBContext mongoContext)
-        {
-            _mongoContext = mongoContext;
-        }
-
-        [HttpPost("users/dummy")]
-        public async Task<ActionResult> AddDummyUsers()
-        {
-            var dummyUsers = new List<Users>
-            {
-                new Users
-                {
-                    Email = "user1@example.com",
-                    Password = "password1",
-                    Role = "Administrator",
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new Users
-                {
-
-                    Email = "user2@example.com",
-                    Password = "password2",
-                    Role = "Vendor",
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new Users
-                {
-              
-                    Email = "user3@example.com",
-                    Password = "password3",
-                    Role = "CSR",
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new Users
-                {
-                 
-                    Email = "user4@example.com",
-                    Password = "password4",
-                    Role = "Vendor",
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new Users
-                {
-                  
-                    Email = "user5@example.com",
-                    Password = "password5",
-                    Role = "CSR",
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                }
-            };
-
-            try
-            {
-                // Insert dummy users
-                await _mongoContext.Users.InsertManyAsync(dummyUsers);
-
-                return Ok("Dummy users added successfully");
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-    }
-}
-*/
 
 namespace EAD_Web.Server.Controllers
 {
@@ -101,11 +21,60 @@ namespace EAD_Web.Server.Controllers
     public class UserController : ControllerBase
     {
         private readonly UserManager<Users> _userManager;
+        private readonly SignInManager<Users> _signInManager;
+        private readonly IConfiguration _configuration;
 
-        public UserController(UserManager<Users> userManager)
+
+        public UserController(UserManager<Users> userManager, SignInManager<Users> signInManager, IConfiguration configuration)
         {
             _userManager = userManager;
+            _signInManager = signInManager;
+            _configuration = configuration;
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] UserLoginDTO model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if(user == null)
+            {
+                return Unauthorized("Invalid Login attempt.");
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(user.UserName,model.Password,false,false);
+
+            if (!result.Succeeded)
+            {
+                return Unauthorized("Invalid Login attempt 1");
+            }
+
+            var token = GenerateJwtToken(user);
+            return Ok(new { token });
+
+
+        }
+
+        private string GenerateJwtToken(Users user)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:SecretKey"]);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role)
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
+
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterDTO model)
@@ -117,7 +86,7 @@ namespace EAD_Web.Server.Controllers
                 FullName = model.FullName,
                 PhoneNumber = model.PhoneNumber,
                 Address = model.Address,
-                IsActive = true,  // Default to active until disapproved
+                IsActive = model.Role == "CSR",  // Automatically active for CSR, inactive for Vendor
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 Role = model.Role
@@ -130,10 +99,48 @@ namespace EAD_Web.Server.Controllers
                 return BadRequest(result.Errors);
             }
 
-//            await _userManager.AddToRoleAsync(user, model.Role);  // Assign the role
+            // Custom message based on the role
+            if (model.Role == "Vendor")
+            {
+                return Ok("Account is pending approval.");
+            }
 
             return Ok("User registered successfully.");
         }
+
+        [HttpGet("pending-approvals")]
+        public async Task<IActionResult> GetPendingApprovals()
+        {
+            // Cast to IMongoQueryable to use MongoDB-specific async methods
+            var pendingUsers = await ((IMongoQueryable<Users>)_userManager.Users)
+                                     .Where(u => !u.IsActive)
+                                     .ToListAsync();
+
+            return Ok(pendingUsers);
+        }
+
+        [HttpPost("approve/{userId}")]
+        public async Task<IActionResult> ApproveUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if(user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            user.IsActive = true;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+
+            return Ok("User approved successfully.");
+        }
+
+
     }
 
 

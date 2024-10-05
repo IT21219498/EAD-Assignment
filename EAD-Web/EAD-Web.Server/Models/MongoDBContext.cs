@@ -21,5 +21,7 @@ namespace EAD_Web.Server.Models
         public IMongoCollection<Users> Users => _database.GetCollection<Users>("Users");
         public IMongoCollection<Vendor> Vendors => _database.GetCollection<Vendor>("Vendors");
         public IMongoCollection<Stock> Stock => _database.GetCollection<Stock>("Stocks");
+
+        public IMongoCollection<Customer> Customers => _database.GetCollection<Customer>("Customers");
     }
 }

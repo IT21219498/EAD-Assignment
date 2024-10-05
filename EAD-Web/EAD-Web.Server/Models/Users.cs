@@ -48,7 +48,7 @@ namespace EAD_Web.Server.Models
 
     public class Users : MongoIdentityUser<Guid>
     {
-     
+
 
         public string Role { get; set; }
         public string FullName { get; set; }

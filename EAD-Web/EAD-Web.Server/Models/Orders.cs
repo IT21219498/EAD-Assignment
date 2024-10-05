@@ -8,16 +8,17 @@ namespace EAD_Web.Server.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public ObjectId OrderId { get; set; }  // Unique identifier for the order
+        public string OrderId { get; set; }  // Unique identifier for the order
 
         [BsonElement("invoiceNo")]
         public int InvoiceNo { get;set; }
 
         [BsonElement("customerId")]
-        public Guid CustomerId { get; set; }  // Unique ID for the associated Order Item
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? CustomerId { get; set; }  // Unique ID for the associated Order Item
 
         [BsonElement("status")]
-        public string Status { get; set; }  // Order status, e.g., "Processing", "Delivered", "Cancelled"
+        public string? Status { get; set; }  // Order status, e.g., "Processing", "Delivered", "Cancelled"
 
         [BsonElement("orderDate")]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
