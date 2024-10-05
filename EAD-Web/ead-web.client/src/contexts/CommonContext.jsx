@@ -6,7 +6,6 @@ const CommonContext = createContext();
 export const CommonContextProvider = ({ children }) => {
   const [screenName, setScreenName] = useState("Dashboard");
   const [isDirty, setIsDirty] = useState(false);
-  const [distributorName, setDistributorName] = useState("");
 
   return (
     <CommonContext.Provider
@@ -15,8 +14,6 @@ export const CommonContextProvider = ({ children }) => {
         setScreenName,
         isDirty,
         setIsDirty,
-        distributorName,
-        setDistributorName,
       }}
     >
       {children}
