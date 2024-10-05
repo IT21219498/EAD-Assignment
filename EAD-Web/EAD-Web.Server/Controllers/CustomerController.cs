@@ -116,23 +116,23 @@ namespace EAD_Web.Server.Controllers
             return Ok("Customer account updated successfully.");
         }
 
-        [HttpPost("deactivate/{customerId}")]
-        public async Task<IActionResult> DeactivateCustomer(string customerId)
-        {
-            var filter = Builders<Customer>.Filter.Eq(c => c.CustomerId, customerId);
-            var update = Builders<Customer>.Update
-                .Set(c => c.IsActive, false)
-                .Set(c => c.UpdatedAt, DateTime.UtcNow);
+        //[HttpPost("deactivate/{customerId}")]
+        //public async Task<IActionResult> DeactivateCustomer(string customerId)
+        //{
+        //    var filter = Builders<Customer>.Filter.Eq(c => c.CustomerId, customerId);
+        //    var update = Builders<Customer>.Update
+        //        .Set(c => c.IsActive, false)
+        //        .Set(c => c.UpdatedAt, DateTime.UtcNow);
 
-            var result = await _customers.UpdateOneAsync(filter, update);
+        //    var result = await _customers.UpdateOneAsync(filter, update);
 
-            if (result.MatchedCount == 0)
-            {
-                return NotFound("Customer not found");
-            }
+        //    if (result.MatchedCount == 0)
+        //    {
+        //        return NotFound("Customer not found");
+        //    }
 
-            return Ok("Customer account deactivated successfully.");
-        }
+        //    return Ok("Customer account deactivated successfully.");
+        //}
 
 
 
