@@ -64,5 +64,31 @@ namespace EAD_Web.Server.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("{vendorName}")]
+        public async Task<IActionResult> GetVendorByName(string vendorName)
+        {
+            if (string.IsNullOrEmpty(vendorName))
+            {
+                return BadRequest("Vendor name cannot be empty.");
+            }
+
+            try
+            {
+                var vendor = await _mongoContext.Vendors.Find(v => v.vendorName.ToLower() == vendorName.ToLower()).FirstOrDefaultAsync();
+                if (vendor == null)
+                {
+                    return NotFound("Vendor not found.");
+                }
+
+                return Ok(vendor);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in getting vendor by name");
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }
