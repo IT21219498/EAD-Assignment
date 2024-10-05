@@ -6,6 +6,7 @@ import LoginForm from "./pages/LoginForm";
 import RegisterForm from "./pages/RegisterForm";
 import OrderManagement from "./pages/OrderManagement";
 import Vendor from "./pages/Vendor";
+import PendingUsers from "./pages/PendingUsers";
 
 const AppRoutes = () => {
   return (
@@ -15,9 +16,10 @@ const AppRoutes = () => {
       <Route path='/Inventory' element={<Inventory />} />
       <Route path='/Login' element={<LoginForm />} />
       <Route path='/Register' element={<RegisterForm />} />
-      <Route path="/OrderManagement" element={<OrderManagement />} />
+      <Route path="/OrderManagement" element={<OrderManagement />} /> 
       <Route path='/Vendor' element={<Vendor />} /> 
-    </Routes>
+      <Route path='/PendingUsers' element={<PendingUsers/>} />  
+      </Routes>
   );
 };
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     MDBBtn,
     MDBContainer,
@@ -7,10 +7,36 @@ import {
     MDBInput
   }
   from 'mdb-react-ui-kit';
+import { loginUser } from '../apis/login';
 
 const LoginForm = () => {
+  const[formData,setFormData] = useState({
+    email: "",
+    password: ""
+  });
+
+  //Hanlde input change
+  const handleChange = (e) =>{
+    setFormData({
+      ...formData,
+      [e.target.id]:e.target.value,
+    });
+  };
+
+  //Handle form submission
+  const handleSubmit = async (e) =>{
+    e.preventDefault();
+
+    try{
+      await loginUser(formData); //Login user with from data
+    }catch(error){
+      console.error("Login request failed:",error);
+    }
+  }
+
   return (
     <MDBContainer className="my-5 gradient-form">
+      <form onSubmit={handleSubmit}>
 
       <MDBRow>
 
@@ -26,8 +52,12 @@ const LoginForm = () => {
             <p >Please login to your account</p>
 
             </div>
-            <MDBInput wrapperClass='mb-4' label='Email address' id='form1' type='email'/>
-            <MDBInput wrapperClass='mb-4' label='Password' id='form2' type='password'/>
+            <MDBInput wrapperClass='mb-4' label='Email address' id='email' type='email'                  value={formData.email}
+               onChange={handleChange}
+            />
+            <MDBInput wrapperClass='mb-4' label='Password' id='password' type='password'                 value={formData.password}
+                onChange={handleChange}
+            />
 
 
             <div className="text-center pt-1 mb-5 pb-1">
@@ -59,6 +89,7 @@ const LoginForm = () => {
 </MDBCol>
 
       </MDBRow>
+      </form>
 
     </MDBContainer>
   )
