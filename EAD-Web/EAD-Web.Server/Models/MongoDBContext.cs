@@ -17,11 +17,9 @@ namespace EAD_Web.Server.Models
         public IMongoCollection<Measuringunit> Measuringunits => _database.GetCollection<Measuringunit>("Measuringunits");
         public IMongoCollection<Category> Categories => _database.GetCollection<Category>("Categories");
         public IMongoCollection<Orders> Orders => _database.GetCollection<Orders>("Orders");
-
         public IMongoCollection<OrderItems> OrderItems => _database.GetCollection<OrderItems>("OrderItems");
-
         public IMongoCollection<Users> Users => _database.GetCollection<Users>("Users");
-
-
+        public IMongoCollection<Vendor> Vendors => _database.GetCollection<Vendor>("Vendors");
+        public IMongoCollection<Stock> Stock => _database.GetCollection<Stock>("Stocks");
     }
 }

@@ -32,7 +32,7 @@ namespace EAD_Web.Server.Controllers
                 {
                     var orderItems = await _mongoContext.OrderItems.Find(oi => oi.OrderId == order.OrderId).ToListAsync();
                     var orderItemResponse = new List<Object>();
-                    var user = await _mongoContext.Users.Find(u => u.UserId == order.CustomerId).FirstOrDefaultAsync();
+                    var user = await _mongoContext.Users.Find(u => u.Id == order.CustomerId).FirstOrDefaultAsync();
                     foreach (var orderItem in orderItems)
                     {
                         var product = await _mongoContext.Products.Find(p => p.Id == orderItem.ProductId).FirstOrDefaultAsync();
