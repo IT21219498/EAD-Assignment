@@ -19,6 +19,10 @@ namespace EAD_Web.Server.Models
         [BsonElement("status")]
         public string Status { get; set; }  // Order status, e.g., "Processing", "Delivered", "Cancelled"
 
+        [BsonElement("orderDate")]
+        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        public DateTime OrderDate { get; set; }  // Date the order was created
+
         [BsonElement("createdAt")]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime CreatedAt { get; set; }  // Date the order was created

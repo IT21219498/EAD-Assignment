@@ -1,39 +1,144 @@
-import { useEffect, useState } from "react";
-import { Table, Form, Button, Modal, Row, Col } from "react-bootstrap";
+import { useCallback, useEffect, useState } from "react";
+import { Table, Form, Button, Modal, Row, Col, Spinner } from "react-bootstrap";
 import { FaEdit } from "react-icons/fa";
 import { RiDeleteBin5Line } from "react-icons/ri";
-import { fetchOrders } from "../apis/orders";
+import { fetchCustomers, fetchMaxInvoice, fetchOrders } from "../apis/orders";
+import { Toast } from "bootstrap";
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [newOrder, setNewOrder] = useState({
+  const [editingOrder, setEditingOrder] = useState(null);
+  const [showSpinner, setShowSpinner] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastVariant, setToastVariant] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+  const deaultOrderItem = {
     name: "",
-    description: "",
-    code: "",
-    category: "",
-    uom: "",
-    itemPerCase: 0,
+    quantity: 0,
     price: 0,
-    cost: 0,
-    reorderLevel: 0,
-    active: false,
-    image: "",
+  };
+
+  const [newOrder, setNewOrder] = useState({
+    invoiceNo: fetchMaxInvoice(),
+    customer: "",
+    orderDate: "",
+    status: "",
+    products: [deaultOrderItem],
   });
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  const loadOrders = async () => {
-    try {
-      const data = await fetchOrders();
-      setOrders(data);
-    } catch (error) {
-      console.error("Error:", error);
-    }
+  const defaultPaginationDetails = {
+    page: 1,
+    pageSize: 5,
+    totalPages: 1,
+    totalItems: 0,
   };
+
+  const [orderPaginationData, setOrderPaginationData] = useState(
+    defaultPaginationDetails
+  );
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setShowSpinner(true);
+      await Promise.all([loadOrders(), loadCustomers(), loadInvoiceNo()]);
+      setShowSpinner(false);
+    };
+
+    fetchData();
+  }, [loadOrders, loadCustomers, loadInvoiceNo]);
+
+  const loadOrders = useCallback(
+    async (search, page = 1, pageSize = 5, searchcolumn) => {
+      if (!search) {
+        search = "";
+      }
+      // setShowSpinner(true);
+      try {
+        console.log("🚀 ~ pageSize:", pageSize);
+        const data = await fetchOrders(search, searchcolumn, page, pageSize);
+        if (data.status === "NOK") {
+          if (!showModal) handleToastShow(data.message, "danger");
+          setOrders([]);
+          setOrderPaginationData(defaultPaginationDetails);
+          setShowSpinner(false);
+          return;
+        }
+        if (data.data.length === 0) {
+          if (!showModal)
+            handleToastShow("No outlets found", "warning", "Warning");
+          setOrders([]);
+          setShowSpinner(false);
+          return;
+        }
+        setOrders(data.data);
+        setOrderPaginationData({
+          page: data.page,
+          pageSize: data.page_size,
+          totalPages: data.total_pages,
+          totalItems: data.total_customers,
+        });
+      } catch (err) {
+        setOrders([]);
+        console.error(err.message);
+        handleToastShow("Error loading outlets", "danger");
+      } finally {
+        setShowSpinner(false);
+      }
+    },
+    []
+  );
+  const loadInvoiceNo = useCallback(async () => {
+    try {
+      const data = await fetchMaxInvoice();
+      if (data.status === "NOK") {
+        if (!showModal) handleToastShow(data.message, "danger");
+        setNewOrder((prev) => ({ ...prev, invoiceNo: "" }));
+        setShowSpinner(false);
+        return;
+      }
+      if (data.data.length === 0) {
+        if (!showModal)
+          handleToastShow("No outlets found", "warning", "Warning");
+        setNewOrder((prev) => ({ ...prev, invoiceNo: "" }));
+        setShowSpinner(false);
+        return;
+      }
+      setNewOrder((prev) => ({ ...prev, invoiceNo: data.data }));
+    } catch (err) {
+      setOrders([]);
+      console.error(err.message);
+      handleToastShow("Error loading outlets", "danger");
+    } finally {
+      setShowSpinner(false);
+    }
+  }, []);
+  const loadCustomers = useCallback(async () => {
+    try {
+      const data = await fetchCustomers();
+      if (data.status === "NOK") {
+        if (!showModal) handleToastShow(data.message, "danger");
+        setCustomers([]);
+        setShowSpinner(false);
+        return;
+      }
+      if (data.data.length === 0) {
+        if (!showModal)
+          handleToastShow("No outlets found", "warning", "Warning");
+        setCustomers([]);
+        setShowSpinner(false);
+        return;
+      }
+      setCustomers(data.data);
+    } catch (err) {
+      setCustomers([]);
+      console.error(err.message);
+      handleToastShow("Error loading outlets", "danger");
+    } finally {
+      setShowSpinner(false);
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -42,23 +147,27 @@ const OrderManagement = () => {
 
   const handleModalClose = () => {
     setShowModal(false);
-    setEditingProduct(null);
+    setEditingOrder(null);
     setNewOrder({ name: "", category: "", price: 0, active: false });
   };
 
   const handleModalShow = (product = null) => {
+    setNewOrder({
+      ...newOrder,
+      invoiceNo: fetchMaxInvoice(),
+    });
     if (product) {
-      setEditingProduct(product);
+      setEditingOrder(product);
       setNewOrder(product);
     }
     setShowModal(true);
   };
 
   const handleSaveProduct = () => {
-    if (editingProduct) {
+    if (editingOrder) {
       setOrders(
         orders.map((product) =>
-          product.id === editingProduct.id ? newOrder : product
+          product.id === editingOrder.id ? newOrder : product
         )
       );
     } else {
@@ -81,36 +190,65 @@ const OrderManagement = () => {
       )
     );
   };
+  const handleToastShow = (message, variant) => {
+    setShowToast(true);
+    setToastVariant(variant);
+    setToastMessage(message);
+  };
+
+  const handleToastClose = () => {
+    setShowToast(false);
+    setToastVariant(null);
+    setToastMessage(null);
+  };
 
   return (
-    <div className="container ">
-      <h2 className="d-flex justify-content-center">Orders</h2>
-      <Button
-        variant="primary"
-        className="mb-3"
-        onClick={() => handleModalShow()}
-      >
-        New Order
-      </Button>
+    <>
+      {showToast && (
+        <Toast
+          title={toastVariant}
+          variant={toastVariant}
+          message={toastMessage}
+          showToast={showToast}
+          handleClose={handleToastClose}
+        />
+      )}
 
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>Invoice No</th>
-            <th>Customer Email</th>
-            <th>Order Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((order) => (
-            <tr key={order.id}>
-              <td>{order.invoiceNo}</td>
-              <td>{order.email}</td>
-              <td>{order.orderDate}</td>
-              <td>{order.status}</td>
-              {/* <td>{order.isActive ? "Active" : "Inactive"}</td>
+      <div className="container ">
+        <h2 className="d-flex justify-content-center">Orders</h2>
+        <Button
+          variant="primary"
+          className="mb-3"
+          onClick={() => handleModalShow()}
+        >
+          New Order
+        </Button>
+
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Customer Email</th>
+              <th>Order Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          {showSpinner && (
+            <div className="d-flex flex-column justify-content-center align-items-center mt-5">
+              <Spinner animation="grow" />
+              <p className="mt-1">Please Wait...</p>
+            </div>
+          )}
+          {!showSpinner && orders.length === 0 && (
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id}>
+                  <td>{order.invoiceNo}</td>
+                  <td>{order.email}</td>
+                  <td>{order.orderDate}</td>
+                  <td>{order.status}</td>
+                  {/* <td>{order.isActive ? "Active" : "Inactive"}</td>
               <td>
                 <Button
                   variant={order.active ? "danger" : "success"}
@@ -133,188 +271,119 @@ const OrderManagement = () => {
                   <RiDeleteBin5Line />
                 </Button>
               </td> */}
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+                </tr>
+              ))}
+            </tbody>
+          )}
+        </Table>
 
-      {/* Modal for Add/Edit Product */}
-      <Modal show={showModal} onHide={handleModalClose} size="xl">
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {editingProduct ? "Edit Product" : "Add New Product"}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Row>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>InvoiceNo</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="invoiceNo"
-                    value={newOrder.invoiceNo}
-                    onChange={handleInputChange}
-                    placeholder="Enter product name"
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={5}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Description</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="description"
-                    value={newOrder.description}
-                    onChange={handleInputChange}
-                    placeholder="Enter product description"
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={2}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Code</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="code"
-                    value={newOrder.code}
-                    onChange={handleInputChange}
-                    placeholder="Enter product code"
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={1}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Status</Form.Label>
-                  <Form.Check
-                    type="switch"
-                    id="active-switch"
-                    name="active"
-                    checked={newOrder.active}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, active: e.target.checked })
-                    }
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Category</Form.Label>
+        {/* Modal for Add/Edit Product */}
+        <Modal show={showModal} onHide={handleModalClose} size="xl">
+          <Modal.Header closeButton>
+            <Modal.Title>
+              {editingOrder ? "Edit Product" : "Add New Order"}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Row>
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>InvoiceNo</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="invoiceNo"
+                      value={newOrder.invoiceNo}
+                      onChange={handleInputChange}
+                      placeholder="Enter product name"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={5}>
+                  <Form.Label>Customer</Form.Label>
                   <Form.Select
-                    name="category"
-                    value={newOrder.category}
+                    name="customer"
+                    value={newOrder.customer}
                     onChange={handleInputChange}
                   >
-                    <option value="">Select Category</option>
-                    {/* {categories.map((category) => (
+                    <option value="">Select Customer</option>
+                    {customers.map((category) => (
                       <option
                         key={category.id.timestamp}
                         value={category.id.timestamp}
                       >
                         {category.name}
                       </option>
-                    ))} */}
+                    ))}
                   </Form.Select>
-                </Form.Group>
-              </Col>
-
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Unit of Measure</Form.Label>
-                  <Form.Select
-                    name="uom"
-                    value={newOrder.uom}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Select UOM</option>
-                    {/* {uoms.map((uom) => (
-                      <option key={uom.id.timestamp} value={uom.id.timestamp}>
-                        {uom.unit}
-                      </option>
-                    ))} */}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Item per Case</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="itemPerCase"
-                    value={newOrder.itemPerCase}
-                    onChange={handleInputChange}
-                    placeholder="Enter item per case"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Price</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="price"
-                    value={newOrder.price}
-                    onChange={handleInputChange}
-                    placeholder="Enter product price"
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Cost</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="cost"
-                    value={newOrder.cost}
-                    onChange={handleInputChange}
-                    placeholder="Enter product cost"
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Reorder Level</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="reorderLevel"
-                    value={newOrder.reorderLevel}
-                    onChange={handleInputChange}
-                    placeholder="Enter reorder level"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Image</Form.Label>
-                  <Form.Control
-                    type="file"
-                    name="image"
-                    value={newOrder.image}
-                    onChange={handleInputChange}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleModalClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSaveProduct}>
-            {editingProduct ? "Update Product" : "Add Product"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </div>
+                </Col>
+                <Col md={2}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Order Date</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="code"
+                      value={newOrder.code}
+                      onChange={handleInputChange}
+                      placeholder="Enter product code"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={1}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Status</Form.Label>
+                    <Form.Check
+                      type="switch"
+                      id="active-switch"
+                      name="active"
+                      checked={newOrder.active}
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, active: e.target.checked })
+                      }
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Table striped bordered hover>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {newOrder.products.map((product, index) => (
+                    <tr key={index}>
+                      <td>{product.name}</td>
+                      <td>{product.quantity}</td>
+                      <td>{product.price}</td>
+                      <td>{product.price * product.quantity}</td>
+                      <td>
+                        <Button variant="danger">Delete</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              <Button variant="primary" onClick={() => handleModalShow()}>
+                Add Product
+              </Button>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleModalClose}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleSaveProduct}>
+              {editingOrder ? "Update Product" : "Add Product"}
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      </div>
+    </>
   );
 };
 

@@ -21,7 +21,7 @@ namespace EAD_Web.Server.Controllers
 
         //Get all orders(Customer Order Management)
         [HttpGet("orders")]
-        public async Task<ActionResult<IEnumerable<Orders>>> GetAllOrders()
+        public async Task<ActionResult> GetAllOrders()
         {
             try
             {
@@ -36,31 +36,77 @@ namespace EAD_Web.Server.Controllers
                     foreach (var orderItem in orderItems)
                     {
                         var product = await _mongoContext.Products.Find(p => p.Id == orderItem.ProductId).FirstOrDefaultAsync();
-                       
-                        orderItemResponse.Add(new
-                        {          
-                            productName = product.Name,
-                            quantity = orderItem.Quantity,
-                            price = orderItem.Price
-                        });
+
+                        if (product != null)
+                        {
+                            orderItemResponse.Add(new
+                            {
+                                productName = product.Name,
+                                quantity = orderItem?.Quantity,
+                                price = orderItem?.Price
+                            });
+                        }
                     }
 
                     orderResponse.Add(new
                     {
                         invoiceNo = order.InvoiceNo,
-                        email = user.Email,
-                        orderDate = order.CreatedAt.Date.ToString("yyyy-MM-dd"),
+                        email = user?.Email ?? "N/A",
                         status = order.Status,
-                        OrderItems = orderItemResponse
+                        orderItems = orderItemResponse,
+                        orderDate = order.OrderDate.Date.ToString("yyyy-MM-dd"),
                     });
                 }
 
-                return Ok(orderResponse);
+                return Ok(new
+                {
+                    status = "success",
+                    data = orderResponse
+                });
             }
             catch (System.Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "An error occurred while fetching orders"
+                });
             }
+        }
+        [HttpGet("getMaximumInvoiceNo")]
+        public async Task<ActionResult> GetMaximumInvoiceNo()
+        {
+            try
+            {
+                var orders = await _mongoContext.Orders.Find(_ => true).ToListAsync();
+                int maxInvoiceNo = 0;
+                foreach (var order in orders)
+                {
+                    if (order.InvoiceNo > maxInvoiceNo)
+                    {
+                        maxInvoiceNo = order.InvoiceNo;
+                    }
+                }
+                return Ok(
+                    new
+                    {
+                        status = "success",
+                        data = maxInvoiceNo
+                    });
+            
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(
+                    new
+                    {
+                        status = "error",
+                        message = "An error occurred while fetching orders"
+                    });
+
+            }
+
+
         }
 
         //// Get a specific order by ID (Order Tracking)
