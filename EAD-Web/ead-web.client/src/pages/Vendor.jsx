@@ -1,7 +1,10 @@
-import { Table, Form, Button, Modal, Row, Col } from "react-bootstrap";
+import { Table, Form, Button, Modal, Row, Col, OverlayTrigger, Tooltip, } from "react-bootstrap";
 import { useEffect, useState } from "react";
-import { fetchVendors, saveVendor } from "../apis/vendor";
+import { fetchVendors, saveVendor, getSelectedVendor } from "../apis/vendor";
 import { fetchCategories } from "../apis/products";
+import { FaEdit } from "react-icons/fa";
+import { RiDeleteBin5Line } from "react-icons/ri";
+import ToastContext from "../contexts/ToastContext";
 
 const Vendor = () => {
   const [vendors, setVendors] = useState([]);
@@ -30,24 +33,23 @@ const Vendor = () => {
     }
   };
 
-  //const loadSelectedVendor = async (vendorName) => {
-  //    try {
-  //        const data = await fetchSelectedVendor(vendorName);
-  //        const vendor = {
-  //            vendorName: data.vendorName,
-  //            address: data.address,
-  //            contactName: data.contactName,
-  //            contactNo: data.contactNo,
-  //            email: data.email,
-  //            category: data.category
-  //        }
-
-  //        setNewVendor(vendor);
-  //    }
-  //    catch (error) {
-  //        console.error(error);
-  //    }
-  //}
+  const loadSelectedVendor = async (vendorName) => {
+      try {
+          const data = await getSelectedVendor(vendorName);
+          const vendor = {
+              vendorName: data.vendorName,
+              address: data.address,
+              contactName: data.contactName,
+              contactNo: data.contactNo,
+              email: data.email,
+              category: data.category
+          }
+          setNewVendor(vendor);
+      }
+      catch (error) {
+          console.error(error);
+      }
+  }
 
   const handleModalClose = () => {
     handleReset();
@@ -65,7 +67,7 @@ const Vendor = () => {
 
   const handleModalShow = (vendor = null) => {
     if (vendor) {
-      loadSelectedVendor(vendor.productName);
+        loadSelectedVendor(vendor.vendorName);
     }
     setShowModal(true);
     setEditingVendor(vendor);
@@ -153,6 +155,7 @@ const Vendor = () => {
             <th className="text-center">Contact No</th>
             <th className="text-center">Email</th>
             <th className="text-center">Category</th>
+            <th className='text-center'>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -164,6 +167,32 @@ const Vendor = () => {
               <td>{vendor.contactNo}</td>
               <td>{vendor.email}</td>
               <td>{vendor.category}</td>
+                  <td className='text-center'>
+                      <OverlayTrigger
+                          placement='top'
+                          overlay={<Tooltip>Edit Product</Tooltip>}
+                      >
+                          <Button
+                              variant='outline-secondary'
+                              onClick={() => handleModalShow(vendor)}
+                              className='mx-2'
+                          >
+                              <FaEdit />
+                          </Button>
+                      </OverlayTrigger>
+
+                      <OverlayTrigger
+                          placement='top'
+                          overlay={<Tooltip>Delete Product</Tooltip>}
+                      >
+                          <Button
+                              variant='outline-danger'
+                              onClick={() => handleShowConfirm("delete", vendor.name)}
+                          >
+                              <RiDeleteBin5Line />
+                          </Button>
+                      </OverlayTrigger>
+                  </td>
             </tr>
           ))}
         </tbody>
