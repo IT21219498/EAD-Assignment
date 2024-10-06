@@ -36,25 +36,32 @@ namespace EAD_Web.Server.Controllers
         public async Task<IActionResult> Login([FromBody] UserLoginDTO model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if(user == null)
+            if (user == null)
             {
-                return Unauthorized("Invalid Login attempt.");
+                return Unauthorized("Invalid login attempt.");
             }
 
-            var result = await _signInManager.PasswordSignInAsync(user.UserName,model.Password,false,false);
+            var result = await _signInManager.PasswordSignInAsync(user.UserName, model.Password, false, false);
 
             if (!result.Succeeded)
             {
-                return Unauthorized("Invalid Login attempt 1");
+                return Unauthorized("Invalid login attempt.");
             }
 
             var token = GenerateJwtToken(user);
-            return Ok(new { token });
 
-
+            // Return userId, role, and the generated JWT token
+            return Ok(new
+            {
+                userId = user.Id.ToString(),  // Convert ObjectId or Guid to string
+                role = user.Role,
+                token
+            });
         }
 
-        private string GenerateJwtToken(Users user)
+    
+
+    private string GenerateJwtToken(Users user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:SecretKey"]);
@@ -62,10 +69,10 @@ namespace EAD_Web.Server.Controllers
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role)
-                }),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),  // Convert ObjectId to string
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role)
+        }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
@@ -73,6 +80,7 @@ namespace EAD_Web.Server.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
 
 
 

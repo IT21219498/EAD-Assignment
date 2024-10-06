@@ -39,6 +39,7 @@ namespace EAD_Web.Server.Models
 */
 
 using AspNetCore.Identity.MongoDbCore.Models;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDbGenericRepository.Attributes;
 
@@ -46,9 +47,11 @@ namespace EAD_Web.Server.Models
 {
 
 
-    public class Users : MongoIdentityUser<Guid>
+    public class Users : MongoIdentityUser<ObjectId>
     {
 
+        [BsonRepresentation(BsonType.ObjectId)]
+        public override ObjectId Id { get; set; }  // Override Id to use ObjectId
 
         public string Role { get; set; }
         public string FullName { get; set; }

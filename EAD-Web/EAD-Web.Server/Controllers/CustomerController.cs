@@ -149,19 +149,29 @@ namespace EAD_Web.Server.Controllers
 
             return Ok("Customer account deactivated successfully.");
         }
-
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDTO model)
         {
+            // Find the customer by email
             var customer = await _customers.Find(c => c.Email == model.Email).FirstOrDefaultAsync();
+
+            // Check if the customer exists, is active, and the password is correct
             if (customer == null || !customer.IsActive || !BCrypt.Net.BCrypt.Verify(model.Password, customer.PasswordHash))
             {
                 return Unauthorized("Invalid login attempt.");
             }
 
+            // Generate JWT token
             var token = GenerateJwtToken(customer);
-            return Ok(new { token });
+
+            // Return the token and customerId in the response
+            return Ok(new
+            {
+                token,
+                customerId = customer.CustomerId.ToString()  // Convert ObjectId to string
+            });
         }
+
 
         private string GenerateJwtToken(Customer customer)
         {

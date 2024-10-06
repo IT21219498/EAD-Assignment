@@ -60,9 +60,9 @@ builder.Services.AddAuthentication(options =>
 
 // Add Identity services
 //Users-Admin,vendor,CSR
-builder.Services.AddIdentity<Users, MongoIdentityRole<Guid>>()
-  .AddMongoDbStores<Users, MongoIdentityRole<Guid>, Guid>(mongoConnectionString, "VendiCore")
- .AddDefaultTokenProviders();
+builder.Services.AddIdentity<Users, MongoIdentityRole<ObjectId>>()
+   .AddMongoDbStores<Users, MongoIdentityRole<ObjectId>, ObjectId>(mongoConnectionString, "VendiCore")
+   .AddDefaultTokenProviders();
 
 
 // Add services to the container.
