@@ -66,13 +66,12 @@ namespace EAD_Web.Server.Controllers
                     data = orderResponse
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
                 return BadRequest(new
                 {
                     status = "NOK",
-                    message = $"An error occurred while fetching orders: {innerExceptionMessage}"
+                    message = "an error occurred while fetching orders"
                 });
             }
         }
@@ -132,13 +131,49 @@ namespace EAD_Web.Server.Controllers
                     data = customersResponse
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+               
                 return BadRequest(new
                 {
                     status = "NOK",
-                    message = $"An error occurred while fetching orders: {innerExceptionMessage}"
+                    message = "An error occurred while fetching customers",
+                });
+            }
+        }
+        [HttpGet("products")]
+        public async Task<ActionResult> GetAllProducts()
+        {
+            try
+            {
+                var products = await _mongoContext.Products.Find(_ => true).ToListAsync();
+                var productsResponse = new List<object>();
+
+                foreach (var product in products)
+                {
+
+                    productsResponse.Add(new
+                    {
+                        name = product.Name,
+                        Id = product.Id.ToString(),
+
+                    });
+
+                }
+
+                return Ok(new
+                {
+                    status = "OK",
+                    data = productsResponse
+                });
+            }
+            catch (Exception)
+            {
+               
+                return BadRequest(new
+                {
+                    status = "NOK",
+                    message = "An error occurred while fetching products",
                 });
             }
         }
