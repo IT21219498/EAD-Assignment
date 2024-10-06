@@ -1,10 +1,11 @@
-import { Table, Form, Button, Modal, Row, Col, OverlayTrigger, Tooltip, } from "react-bootstrap";
-import { useEffect, useState } from "react";
-import { fetchVendors, saveVendor, getSelectedVendor } from "../apis/vendor";
+import { Table, Form, Button, Modal, Row, Col, OverlayTrigger, Tooltip, Pagination } from "react-bootstrap";
+import { useEffect, useState, useContext } from "react";
+import { fetchVendors, saveVendor, getSelectedVendor, updateVendor, deleteVendor } from "../apis/vendor";
 import { fetchCategories } from "../apis/products";
 import { FaEdit } from "react-icons/fa";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import ToastContext from "../contexts/ToastContext";
+import ConfirmAction from "../components/ConfirmAction";
 
 const Vendor = () => {
   const [vendors, setVendors] = useState([]);
@@ -18,17 +19,53 @@ const Vendor = () => {
     email: "",
     category: "",
   });
+
   const [categories, setCategories] = useState([]);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [actionType, setActionType] = useState("");
+  const [selectedVendorName, setSelectedVendorName] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8; 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentVendors = vendors.slice(indexOfFirstItem, indexOfLastItem);
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+  const totalPages = Math.ceil(vendors.length / itemsPerPage);
+  const {
+    setShowToast,
+    setToastTitle,
+    setToastVariant,
+    setToastMessage,
+    setToastPosition,
+  } = useContext(ToastContext);
+
+  const [formErrors, setFormErrors] = useState({
+    vandorName: "",
+    address: "",
+    contactName: "",
+    contactNo: "",
+    email: "",
+    category: "",
+  });
 
   useEffect(() => {
     Promise.all([loadVendors(), loadCategories()]);
   }, []);
+
+  const handleShowToast = (title, message, variant) => {
+    setShowToast(true);
+    setToastTitle(title);
+    setToastMessage(message);
+    setToastVariant(variant);
+    setToastPosition("top-end");
+  };
 
   const loadVendors = async () => {
     try {
       const data = await fetchVendors();
       setVendors(data);
     } catch (error) {
+      handleShowToast("Error", error.message, "danger");
       console.error(error);
     }
   };
@@ -47,9 +84,24 @@ const Vendor = () => {
           setNewVendor(vendor);
       }
       catch (error) {
+          handleShowToast("Error", error.message, "danger");
           console.error(error);
       }
   }
+
+  const handleShowConfirm = (type, name) => {
+    setActionType(type);
+    setSelectedVendorName(name);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (actionType === "delete") {
+      await deleteVendor(selectedVendorName);
+    }
+    setShowConfirm(false);
+    loadVendors();
+  };
 
   const handleModalClose = () => {
     handleReset();
@@ -96,18 +148,51 @@ const Vendor = () => {
       const data = await fetchCategories();
       setCategories(data);
     } catch (error) {
-      //handleShowToast("Error", error.message, "danger");
+      handleShowToast("Error", error.message, "danger");
       console.error("Error:", error);
     }
   };
 
+  const validateForm = () => {
+    let errors = {};
+    let isValid = true;
+
+    if (!newVendor.vendorName) {
+      errors.vendorName = "Vendor name is required";
+      isValid = false;
+    }
+    if (!newVendor.address) {
+      errors.address = "Address is required";
+      isValid = false;
+      }
+    if (!newVendor.contactName) {
+      errors.contactName = "Contact Person name is required";
+      isValid = false;
+    }
+    if (!newVendor.contactNo) {
+      errors.contactNo = "Contact number is required";
+      isValid = false;
+    }
+    if (!newVendor.email) {
+      errors.email = "Email is required";
+      isValid = false;
+    }
+    if (!newVendor.category) {
+      errors.category = "Category is required";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+    };
+
   const handleSaveVendor = async () => {
-    //if (!validateForm()) {
-    //    return;
-    //}
+    if (!validateForm()) {
+        return;
+    }
     try {
       if (editingVendor) {
-        //handleUpdateProduct();
+        handleUpdateVendor();
       } else {
         const data = {
           vendorName: newVendor.vendorName,
@@ -120,17 +205,49 @@ const Vendor = () => {
 
         const result = await saveVendor(data);
         if (result.error) {
-          //handleShowToast("Error", result.error, "danger");
+          handleShowToast("Error", result.error, "danger");
           console.error("Error:", result.error);
           return;
         } else {
-          //handleShowToast("Success", "Product added successfully", "success");
+          handleShowToast("Success", "Product added successfully", "success");
           handleModalClose();
           loadVendors();
         }
       }
     } catch (error) {
-      //handleShowToast("Error", error.message, "danger");
+      handleShowToast("Error", error.message, "danger");
+      console.error("Error:", error);
+    }
+  };
+
+  const handleUpdateVendor = async () => {
+    if (editingVendor === null) {
+      handleShowToast("Error", "Vendor not found", "danger");
+      return;
+    }
+    try {
+      const data = {
+        vendorName: editingVendor.vendorName,
+        address: newVendor.address,
+        contactName: newVendor.contactName,
+        contactNo: newVendor.contactNo,
+        email: newVendor.email,
+        category: newVendor.category,
+      };
+
+      const result = await updateVendor(data);
+
+      if (result.error) {
+        handleShowToast("Error", result.error, "danger");
+        console.error("Error:", result.error);
+        return;
+      } else {
+        handleShowToast("Success", "Vendor updated successfully", "success");
+        handleModalClose();
+        await loadVendors();
+      }
+    } catch (error) {
+      handleShowToast("Error", error.message, "danger");
       console.error("Error:", error);
     }
   };
@@ -159,7 +276,7 @@ const Vendor = () => {
           </tr>
         </thead>
         <tbody>
-          {vendors.map((vendor) => (
+          {currentVendors.map((vendor) => (
             <tr key={vendor.vendorName}>
               <td>{vendor.vendorName}</td>
               <td>{vendor.address}</td>
@@ -187,7 +304,7 @@ const Vendor = () => {
                       >
                           <Button
                               variant='outline-danger'
-                              onClick={() => handleShowConfirm("delete", vendor.name)}
+                              onClick={() => handleShowConfirm("delete", vendor.vendorName)}
                           >
                               <RiDeleteBin5Line />
                           </Button>
@@ -197,6 +314,36 @@ const Vendor = () => {
           ))}
         </tbody>
       </Table>
+
+      <Pagination className='justify-content-center'>
+        <Pagination.First
+          onClick={() => handlePageChange(1)}
+          disabled={currentPage === 1}
+        />
+        <Pagination.Prev
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        />
+
+        {[...Array(totalPages)].map((_, i) => (
+          <Pagination.Item
+            key={i + 1}
+            active={i + 1 === currentPage}
+            onClick={() => handlePageChange(i + 1)}
+          >
+            {i + 1}
+          </Pagination.Item>
+        ))}
+
+        <Pagination.Next
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        />
+        <Pagination.Last
+          onClick={() => handlePageChange(totalPages)}
+          disabled={currentPage === totalPages}
+        />
+      </Pagination>
 
       <Modal show={showModal} onHide={handleModalClose} size="xl">
         <Modal.Header closeButton>
@@ -216,11 +363,11 @@ const Vendor = () => {
                     value={newVendor.vendorName}
                     onChange={handleInputChange}
                     placeholder="Enter vendor name"
-                    /*isInvalid={formErrors.name}*/
+                    isInvalid={formErrors.vendorName}
                   />
-                  {/*<Form.Control.Feedback type='invalid'>*/}
-                  {/*    {formErrors.name}*/}
-                  {/*</Form.Control.Feedback>*/}
+                  <Form.Control.Feedback type='invalid'>
+                      {formErrors.vendorName}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={4}>
@@ -232,11 +379,11 @@ const Vendor = () => {
                     value={newVendor.address}
                     onChange={handleInputChange}
                     placeholder="Enter vendor address"
-                    /*isInvalid={formErrors.description}*/
+                    isInvalid={formErrors.address}
                   />
-                  {/*<Form.Control.Feedback type='invalid'>*/}
-                  {/*    {formErrors.description}*/}
-                  {/*</Form.Control.Feedback>*/}
+                  <Form.Control.Feedback type='invalid'>
+                      {formErrors.address}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={4}>
@@ -248,11 +395,11 @@ const Vendor = () => {
                     value={newVendor.contactName}
                     onChange={handleInputChange}
                     placeholder="Enter contact person"
-                    /*isInvalid={formErrors.code}*/
+                    isInvalid={formErrors.contactName}
                   />
-                  {/*<Form.Control.Feedback type='invalid'>*/}
-                  {/*    {formErrors.code}*/}
-                  {/*</Form.Control.Feedback>*/}
+                  <Form.Control.Feedback type='invalid'>
+                      {formErrors.contactName}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
@@ -266,11 +413,11 @@ const Vendor = () => {
                     value={newVendor.contactNo}
                     onChange={handleInputChange}
                     placeholder="Enter contact number"
-                    /*isInvalid={formErrors.uom}*/
+                    isInvalid={formErrors.contactNo}
                   />
-                  {/*<Form.Control.Feedback type='invalid'>*/}
-                  {/*    {formErrors.uom}*/}
-                  {/*</Form.Control.Feedback>*/}
+                  <Form.Control.Feedback type='invalid'>
+                      {formErrors.contactNo}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={4}>
@@ -282,11 +429,11 @@ const Vendor = () => {
                     value={newVendor.email}
                     onChange={handleInputChange}
                     placeholder="Enter email"
-                    /*isInvalid={formErrors.itemPerCase}*/
+                    isInvalid={formErrors.email}
                   />
-                  {/*<Form.Control.Feedback type='invalid'>*/}
-                  {/*    {formErrors.itemPerCase}*/}
-                  {/*</Form.Control.Feedback>*/}
+                  <Form.Control.Feedback type='invalid'>
+                      {formErrors.email}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
               <Col md={4}>
@@ -296,7 +443,7 @@ const Vendor = () => {
                     name="category"
                     value={newVendor.category}
                     onChange={handleInputChange}
-                    /*isInvalid={formErrors.category}*/
+                    isInvalid={formErrors.category}
                   >
                     <option value="">Select Category</option>
                     {categories.map((category) => (
@@ -305,9 +452,9 @@ const Vendor = () => {
                       </option>
                     ))}
                   </Form.Select>
-                  {/*<Form.Control.Feedback type='invalid'>*/}
-                  {/*    {formErrors.category}*/}
-                  {/*</Form.Control.Feedback>*/}
+                  <Form.Control.Feedback type='invalid'>
+                      {formErrors.category}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
@@ -325,6 +472,15 @@ const Vendor = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      <ConfirmAction
+        show={showConfirm}
+        onHide={() => setShowConfirm(false)}
+        onConfirm={handleConfirmAction}
+        title='Are you sure?'
+        message={"This will permanently delete the vendor."}
+        confirmLabel={actionType === "delete" ? "Delete" : "Yes, Update"}
+        confirmVariant={actionType === "delete" ? "danger" : "primary"}
+      />
     </div>
   );
 };

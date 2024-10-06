@@ -2,8 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { Table, Form, Button, Modal, Row, Col, Spinner } from "react-bootstrap";
 import { FaEdit } from "react-icons/fa";
 import { RiDeleteBin5Line } from "react-icons/ri";
-import { fetchCustomers, fetchMaxInvoice, fetchOrders } from "../apis/orders";
-import { Toast } from "bootstrap";
+import {
+  fetchCustomers,
+  fetchMaxInvoice,
+  fetchOrders,
+  fetchProducts,
+} from "../apis/orders";
+import Toast from "../components/Toast";
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -80,6 +85,22 @@ const OrderManagement = () => {
   const loadInvoiceNo = useCallback(async () => {
     try {
       const data = await fetchMaxInvoice();
+      if (data.status === "NOK") {
+        if (!showModal) handleToastShow(data.message, "danger");
+        setNewOrder((prev) => ({ ...prev, invoiceNo: "" }));
+
+        return;
+      }
+      setNewOrder((prev) => ({ ...prev, invoiceNo: data.data }));
+    } catch (err) {
+      setOrders([]);
+      console.error(err.message);
+      handleToastShow("Error loading outlets", "danger");
+    }
+  }, []);
+  const loadProducts = useCallback(async () => {
+    try {
+      const data = await fetchProducts();
       if (data.status === "NOK") {
         if (!showModal) handleToastShow(data.message, "danger");
         setNewOrder((prev) => ({ ...prev, invoiceNo: "" }));
@@ -183,12 +204,17 @@ const OrderManagement = () => {
   useEffect(() => {
     const fetchData = async () => {
       setShowSpinner(true);
-      await Promise.all([loadOrders(), loadCustomers(), loadInvoiceNo()]);
+      await Promise.all([
+        loadOrders(),
+        loadCustomers(),
+        loadInvoiceNo(),
+        loadProducts(),
+      ]);
       setShowSpinner(false);
     };
 
     fetchData();
-  }, [loadOrders, loadCustomers, loadInvoiceNo]);
+  }, [loadOrders, loadCustomers, loadInvoiceNo, loadProducts]);
 
   return (
     <>
@@ -275,7 +301,7 @@ const OrderManagement = () => {
           <Modal.Body>
             <Form>
               <Row>
-                <Col md={4}>
+                <Col md={2}>
                   <Form.Group className="mb-3">
                     <Form.Label>InvoiceNo</Form.Label>
                     <Form.Control
@@ -284,10 +310,11 @@ const OrderManagement = () => {
                       value={newOrder.invoiceNo}
                       onChange={handleInputChange}
                       placeholder="Enter product name"
+                      disabled
                     />
                   </Form.Group>
                 </Col>
-                <Col md={5}>
+                <Col md={4}>
                   <Form.Label>Customer</Form.Label>
                   <Form.Select
                     name="customer"
@@ -316,7 +343,7 @@ const OrderManagement = () => {
                     />
                   </Form.Group>
                 </Col>
-                <Col md={1}>
+                <Col md={3}>
                   <Form.Group className="mb-3">
                     <Form.Label>Status</Form.Label>
                     <Form.Select
@@ -327,6 +354,9 @@ const OrderManagement = () => {
                       <option value="">Select Status</option>
                       <option value="Pending">Pending</option>
                       <option value="Delivered">Delivered</option>
+                      <option value="Partially Delivered">
+                        Partially Delivered
+                      </option>
                       <option value="Cancelled">Cancelled</option>
                     </Form.Select>
                   </Form.Group>
