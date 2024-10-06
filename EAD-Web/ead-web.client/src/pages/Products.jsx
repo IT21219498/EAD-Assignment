@@ -403,7 +403,7 @@ const Products = () => {
               <td>{product.code}</td>
               <td>{product.categoryName}</td>
               <td>{product.measurementUnitName}</td>
-              <td className='text-end'>{product.itemPerCase}</td>
+              <td className='text-center'>{product.itemPerCase}</td>
               <td className='text-end'>{Number(product.cost).toFixed(2)}</td>
               <td className='text-end'>{Number(product.price).toFixed(2)}</td>
               <td className='text-center'>

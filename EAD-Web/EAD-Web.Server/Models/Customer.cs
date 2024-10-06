@@ -15,6 +15,8 @@ namespace EAD_Web.Server.Models
         public string PhoneNumber { get; set; }
         public string Address { get; set; }
         public string PasswordHash { get; set; }
+        public bool HasBeenActivated { get; set; }
+
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
