@@ -46,8 +46,6 @@ console.log("Login response",response);
       }else{
         // toast.error(`Invalid credentials. Please try again.`);
         showToast('Invalid credentials. Please try again.', 'error'); // Show error toast
-
-
       }
         }catch(error){
       console.error("Login request failed:",error);

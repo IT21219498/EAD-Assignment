@@ -4,25 +4,32 @@ import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import proptype from "prop-types";
 import logo from "../assets/EADlogo.png";
 import { FaRegUserCircle } from "react-icons/fa";
-import AuthContext from "../contexts/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import AuthContext from '../contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 
-const NavigationBar = ({ userRole }) => {
+
+const NavigationBar = () => {
   const navigate = useNavigate();
 
-  console.log("User roleeee", userRole);
   const { user, setUser } = useContext(AuthContext);
 
   // useEffect hook to redirect to login if user is not authenticated
   useEffect(() => {
-    !user && navigate("/login", { replace: true });
+    !user && navigate('/login', { replace: true });
+    console.log("User after refresh",user);
+
   }, []);
 
   const handleLogout = () => {
+    console.log("User after logout",user);
+
     setUser(null);
     // Clear the session storage
+    console.log("User after logout",user);
+
     sessionStorage.clear();
     // Redirect to the login page
+    console.log("User after logout",user);
     window.location.href = "/login";
   };
 
@@ -52,6 +59,16 @@ const NavigationBar = ({ userRole }) => {
                   Orders
                 </NavDropdown.Item>
                 {user === "Admin" && (
+            {user.role === "Admin" && (
+              <>
+                {/* Admin-Specific Links */}
+                <NavDropdown
+                  title="Order Management"
+                  id="order-management-dropdown"
+                >
+                  <NavDropdown.Item href="/OrderManagement">
+                    Orders
+                  </NavDropdown.Item>
                   <NavDropdown.Item href="/ConfirmOrder">
                     Ready Orders
                   </NavDropdown.Item>
@@ -59,7 +76,7 @@ const NavigationBar = ({ userRole }) => {
               </NavDropdown>
             </>
 
-            {user === "Admin" && (
+            {user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -78,14 +95,15 @@ const NavigationBar = ({ userRole }) => {
                 </NavDropdown>
               </>
             )}
-            {user === "Admin" && (
+
+{user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
                   title="Account Management"
                   id="user-management-dropdown"
                 >
-                  <NavDropdown.Item href="PendingUsers">
+                  <NavDropdown.Item href="/PendingUsers">
                     Vendor Account Management
                   </NavDropdown.Item>
                   <NavDropdown.Item href="/CustomerActivation">
@@ -94,7 +112,8 @@ const NavigationBar = ({ userRole }) => {
                 </NavDropdown>
               </>
             )}
-            {user === "Vendor" && (
+
+            {user.role === "Vendor" && (
               <>
                 {/* Vendor-Specific Links */}
                 <NavDropdown
@@ -110,7 +129,8 @@ const NavigationBar = ({ userRole }) => {
                 </NavDropdown>
               </>
             )}
-            {user === "CSR" && (
+
+            {user.role === "CSR" && (
               <>
                 {/* CSR-Specific Links */}
                 <Nav.Link href="#customer-orders">
@@ -146,8 +166,5 @@ const NavigationBar = ({ userRole }) => {
   );
 };
 
-NavigationBar.propTypes = {
-  userRole: proptype.string.isRequired,
-};
 
 export default NavigationBar;
