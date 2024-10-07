@@ -4,9 +4,8 @@ import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import proptype from "prop-types";
 import logo from "../assets/EADlogo.png";
 import { FaRegUserCircle } from "react-icons/fa";
-import AuthContext from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-
+import AuthContext from "../contexts/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 
 const NavigationBar = () => {
   const navigate = useNavigate();
@@ -15,21 +14,20 @@ const NavigationBar = () => {
 
   // useEffect hook to redirect to login if user is not authenticated
   useEffect(() => {
-    !user && navigate('/login', { replace: true });
-    console.log("User after refresh",user);
-
+    !user && navigate("/login", { replace: true });
+    console.log("User after refresh", user);
   }, []);
 
   const handleLogout = () => {
-    console.log("User after logout",user);
+    console.log("User after logout", user);
 
     setUser(null);
     // Clear the session storage
-    console.log("User after logout",user);
+    console.log("User after logout", user);
 
     sessionStorage.clear();
     // Redirect to the login page
-    console.log("User after logout",user);
+    console.log("User after logout", user);
     window.location.href = "/login";
   };
 
@@ -49,16 +47,6 @@ const NavigationBar = () => {
           <Nav className="me-auto">
             {/* Common Links */}
             <Nav.Link href="/">Home</Nav.Link>
-            <>
-              {/* Admin-Specific Links */}
-              <NavDropdown
-                title="Order Management"
-                id="order-management-dropdown"
-              >
-                <NavDropdown.Item href="/OrderManagement">
-                  Orders
-                </NavDropdown.Item>
-                {user === "Admin" && (
             {user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
@@ -72,9 +60,9 @@ const NavigationBar = () => {
                   <NavDropdown.Item href="/ConfirmOrder">
                     Ready Orders
                   </NavDropdown.Item>
-                )}
-              </NavDropdown>
-            </>
+                </NavDropdown>
+              </>
+            )}
 
             {user.role === "Admin" && (
               <>
@@ -96,7 +84,7 @@ const NavigationBar = () => {
               </>
             )}
 
-{user.role === "Admin" && (
+            {user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -165,6 +153,5 @@ const NavigationBar = () => {
     </Navbar>
   );
 };
-
 
 export default NavigationBar;
