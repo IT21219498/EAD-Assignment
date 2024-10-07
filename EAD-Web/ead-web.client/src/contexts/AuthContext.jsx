@@ -9,11 +9,11 @@ export const AuthContextProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    if (!user) {
-      checkUserLoggedIn();
-    }
-  }, [user]);
+    useEffect(() => {
+        if (!user) {
+            checkUserLoggedIn();
+        }
+    }, [ navigate]);
 
   const checkUserLoggedIn = async () => {
     try {
@@ -27,10 +27,12 @@ export const AuthContextProvider = ({ children }) => {
         },
       });
 
-      if (response.ok) {
-        const userData = await response.json();
-        console.log("User Data:", userData);
-        setUser(userData.role);
+        if (response.ok) {
+            const userData = await response.json();
+            console.log('User Data:', userData);
+            const { userId, role } = userData;
+
+            // setUser({userId,role});
         //     if (
         //         location.pathname === '/login' ||
         //         location.pathname === '/register'
@@ -41,30 +43,43 @@ export const AuthContextProvider = ({ children }) => {
         //       } else {
         //         navigate(location.pathname ? location.pathname : '/');
         //   }
-      } else {
-        navigate("/login", { replace: true });
-      }
-    } catch (err) {
-      console.log(err);
-      navigate("/login", { replace: true });
+         }
+
+        else {
+            setUser(null);
+            sessionStorage.clear();
+            navigate('/login', { replace: true });
+        }
+
+    }  catch(err){
+        setUser(null);
+        sessionStorage.clear();
+        console.log(err);
+        navigate('/login', { replace: true });
     }
   };
 
-  //Login Request
-  const loginUser = async (loginModel) => {
-    try {
-      const response = await fetch("/api/User/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(loginModel),
-      });
+    //Login Request
+     const loginUser = async (loginModel) => {
+        try {
+            const response = await fetch('/api/User/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(loginModel),
+            });
+    
+            if (response.ok) {
+                const result = await response.json();
+                console.log("Login successful:", result);
+                const { token, userId, role } = result;
+    
+                sessionStorage.setItem('token', token);
+                // sessionStorage.setItem('userId', userId);
+                // sessionStorage.setItem('role', role);
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Login successful:", result);
-        const { token, userId, role } = result;
+                setUser({userId,role});
 
         sessionStorage.setItem("token", token);
         sessionStorage.setItem("userId", userId);

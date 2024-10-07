@@ -1,4 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿/*
+ * File: CustomerController.cs
+ * Description: Controller for managing customer registration, activation, modification, deactivation, login, and related operations.
+ * Author: Jayasinghe P.T. - IT21234484
+ */
+
+
+using Microsoft.AspNetCore.Mvc;
 using EAD_Web.Server.Models;
 using EAD_Web.Server.DTOs;
 using MongoDB.Driver;
@@ -19,14 +26,17 @@ namespace EAD_Web.Server.Controllers
         private readonly IMongoCollection<Customer> _customers;
         private readonly IConfiguration _configuration;
 
-
+        
+        // Summary-Initializes a new instance of the CustomerController with the specified MongoDB database and configuration.
+        // <param name="database">The MongoDB database instance.</param>
+        // <param name="configuration">The application configuration settings.</param>
         public CustomerController(IMongoDatabase database, IConfiguration configuration)
         {
             _customers = database.GetCollection<Customer>("Customers");
             _configuration = configuration;
         }
 
-
+        // Registers a new customer with the provided details.
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] CustomerRegisterDTO model)
         {
@@ -49,7 +59,7 @@ namespace EAD_Web.Server.Controllers
             await _customers.InsertOneAsync(customer);
             return Ok("Customer registered successfully, pending activation.");
         }
-
+        // Activates a customer account based on the provided customer ID.
         [HttpPost("activate/{customerId}")]
         public async Task<IActionResult> ActivateCustomer(string customerId)
         {
@@ -75,6 +85,7 @@ namespace EAD_Web.Server.Controllers
             return Ok("Customer activated successfully.");
         }
 
+        // Modifies the details of an existing customer based on the provided customer ID and update data.
         [HttpPut("modify/{customerId}")]
         public async Task<IActionResult> ModifyCustomer(string customerId, [FromBody] CustomerUpdateDTO model)
         {
@@ -126,6 +137,7 @@ namespace EAD_Web.Server.Controllers
             return Ok("Customer account updated successfully.");
         }
 
+        // Deactivates a customer account based on the provided customer ID.
         [HttpPost("deactivate/{customerId}")]
         public async Task<IActionResult> DeactivateCustomer(string customerId)
         {
@@ -149,6 +161,8 @@ namespace EAD_Web.Server.Controllers
 
             return Ok("Customer account deactivated successfully.");
         }
+
+        // Authenticates a customer and generates a JWT token upon successful login.
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDTO model)
         {
@@ -173,6 +187,7 @@ namespace EAD_Web.Server.Controllers
         }
 
 
+        // Generates a JWT token for the authenticated customer.
         private string GenerateJwtToken(Customer customer)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -192,6 +207,7 @@ namespace EAD_Web.Server.Controllers
             return tokenHandler.WriteToken(token);
         }
 
+        // Retrieves a list of customers pending activation.
         [HttpGet("pending-activation")]
         public async Task<IActionResult> GetPendingActivationCustomers()
         {
@@ -220,6 +236,7 @@ namespace EAD_Web.Server.Controllers
             return Ok(pendingCustomerDtos); // Return the DTO with CustomerId included
         }
 
+        // Retrieves a list of all deactivated customers.
         [HttpGet("deactivated")]
         public async Task<IActionResult> GetAllDeactivatedCustomers()
         {
@@ -244,6 +261,7 @@ namespace EAD_Web.Server.Controllers
             return Ok(deactivatedCustomersDTOs);
         }
 
+        // Reactivates a deactivated customer account based on the provided customer ID.
         [HttpPost("reactivate/{customerId}")]
         public async Task<IActionResult> ReactivateCustomer(string customerId)
         {

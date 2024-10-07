@@ -8,30 +8,18 @@ import AuthContext from "../contexts/AuthContext";
 const Layout = ({ children }) => {
   const { user } = useContext(AuthContext);
 
-  console.log("user",user);
+  console.log("user data",user);
 
   const navigate = useNavigate(); // Initialize useNavigate for redirection
 
-  const [userRole, setUserRole] = useState("");
 
-  // useEffect(() => {
-  //   const storedUserRole = sessionStorage.getItem("role");
-
-
-  //   if (storedUserRole) {
-  //     setUserRole(storedUserRole);
-  //   } else {
-  //     setUserRole("guest");
-  //   }
-  // }, []);
-  console.log("Stored user role",userRole);
 
 
   return (
     <>
         {user && (
         <div style={{ marginBottom: "100px" }}>
-          <NavigationBar userRole={userRole} />
+          <NavigationBar  />
         </div>
       )}
 {/* {['Admin', 'Vendor', 'CSR'].includes(userRole) && <NavigationBar userRole={userRole} />} */}

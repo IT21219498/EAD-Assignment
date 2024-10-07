@@ -1,33 +1,35 @@
 // src/components/Navbar.jsx
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from "react";
 import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import proptype from "prop-types";
 import logo from "../assets/EADlogo.png";
 import { FaRegUserCircle } from "react-icons/fa";
-import AuthContext from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import AuthContext from "../contexts/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 
-
-const NavigationBar = ({ userRole }) => {
+const NavigationBar = () => {
   const navigate = useNavigate();
 
-  console.log("User roleeee",userRole);
   const { user, setUser } = useContext(AuthContext);
 
-    // useEffect hook to redirect to login if user is not authenticated
+  // useEffect hook to redirect to login if user is not authenticated
   useEffect(() => {
-    !user && navigate('/login', { replace: true });
+    !user && navigate("/login", { replace: true });
+    console.log("User after refresh", user);
   }, []);
 
   const handleLogout = () => {
+    console.log("User after logout", user);
+
     setUser(null);
     // Clear the session storage
+    console.log("User after logout", user);
+
     sessionStorage.clear();
     // Redirect to the login page
+    console.log("User after logout", user);
     window.location.href = "/login";
   };
-
-
 
   return (
     <Navbar bg="light" expand="lg">
@@ -45,7 +47,7 @@ const NavigationBar = ({ userRole }) => {
           <Nav className="me-auto">
             {/* Common Links */}
             <Nav.Link href="/">Home</Nav.Link>
-            {user === "Admin" && (
+            {user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -62,7 +64,7 @@ const NavigationBar = ({ userRole }) => {
               </>
             )}
 
-            {user === "Admin" && (
+            {user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -82,15 +84,15 @@ const NavigationBar = ({ userRole }) => {
               </>
             )}
 
-{user === "Admin" && (
+            {user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
                   title="Account Management"
                   id="user-management-dropdown"
                 >
-                  <NavDropdown.Item href="PendingUsers">
-                    Vendor Account  Management
+                  <NavDropdown.Item href="/PendingUsers">
+                    Vendor Account Management
                   </NavDropdown.Item>
                   <NavDropdown.Item href="/CustomerActivation">
                     Customer Account Management
@@ -99,7 +101,7 @@ const NavigationBar = ({ userRole }) => {
               </>
             )}
 
-            {user === "Vendor" && (
+            {user.role === "Vendor" && (
               <>
                 {/* Vendor-Specific Links */}
                 <NavDropdown
@@ -116,7 +118,7 @@ const NavigationBar = ({ userRole }) => {
               </>
             )}
 
-            {user === "CSR" && (
+            {user.role === "CSR" && (
               <>
                 {/* CSR-Specific Links */}
                 <Nav.Link href="#customer-orders">
@@ -126,16 +128,14 @@ const NavigationBar = ({ userRole }) => {
                   title="Account Management"
                   id="csr-management-dropdown"
                 >
-                           <NavDropdown.Item href="/CustomerActivation">
+                  <NavDropdown.Item href="/CustomerActivation">
                     Customer Account Management
                   </NavDropdown.Item>
                   <NavDropdown.Item href="/ReActivateCustomer">
                     Account Re-Activation Management
-                  </NavDropdown.Item >
+                  </NavDropdown.Item>
                 </NavDropdown>
-              
               </>
-              
             )}
           </Nav>
           <Nav className="ms-auto">
@@ -152,10 +152,6 @@ const NavigationBar = ({ userRole }) => {
       </Container>
     </Navbar>
   );
-};
-
-NavigationBar.propTypes = {
-  userRole: proptype.string.isRequired,
 };
 
 export default NavigationBar;
