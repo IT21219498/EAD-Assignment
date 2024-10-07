@@ -23,5 +23,6 @@ namespace EAD_Web.Server.Models
         public IMongoCollection<Stock> Stock => _database.GetCollection<Stock>("Stocks");
 
         public IMongoCollection<Customer> Customers => _database.GetCollection<Customer>("Customers");
+        public IMongoCollection<VendorRating> VendorRatings => _database.GetCollection<VendorRating>("VendorRatings");
     }
 }
