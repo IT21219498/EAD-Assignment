@@ -1,18 +1,41 @@
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useState,useContext } from "react";
 import NavigationBar from "./Navbar";
 import { useEffect } from "react";
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
+import AuthContext from "../contexts/AuthContext";
 
 const Layout = ({ children }) => {
-  const [userRole, setUserRole] = useState("Administrator");
+  const { user } = useContext(AuthContext);
 
-  useEffect(() => {
-    setUserRole("Administrator");
-  }, []);
+  console.log("user",user);
+
+  const navigate = useNavigate(); // Initialize useNavigate for redirection
+
+  const [userRole, setUserRole] = useState("");
+
+  // useEffect(() => {
+  //   const storedUserRole = sessionStorage.getItem("role");
+
+
+  //   if (storedUserRole) {
+  //     setUserRole(storedUserRole);
+  //   } else {
+  //     setUserRole("guest");
+  //   }
+  // }, []);
+  console.log("Stored user role",userRole);
+
+
   return (
     <>
-      <NavigationBar userRole={userRole} />
-
+        {user && (
+        <div style={{ marginBottom: "100px" }}>
+          <NavigationBar userRole={userRole} />
+        </div>
+      )}
+{/* {['Admin', 'Vendor', 'CSR'].includes(userRole) && <NavigationBar userRole={userRole} />} */}
+{/* <NavigationBar userRole={userRole} /> */}
       <main className=' mt-4'>{children}</main>
     </>
   );

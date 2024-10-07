@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
-import {
-    MDBBtn,
-    MDBContainer,
-    MDBRow,
-    MDBCol,
-    MDBInput
-  }
-  from 'mdb-react-ui-kit';
-import { loginUser } from '../apis/login';
+import React, { useState,useContext } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
+import AuthContext from '../contexts/AuthContext';
+import { Link } from "react-router-dom";
+import Logo from '../assets/EADlogo.png';
+import NewToastContext from '../contexts/NewToastContext';
+
 
 const LoginForm = () => {
+  const { loginUser } = useContext(AuthContext);
+  const { showToast } = useContext(NewToastContext); // Use the toast context
+
   const[formData,setFormData] = useState({
     email: "",
     password: ""
   });
+
+  const navigate = useNavigate(); 
+
+    
+
 
   //Hanlde input change
   const handleChange = (e) =>{
@@ -22,76 +27,98 @@ const LoginForm = () => {
       [e.target.id]:e.target.value,
     });
   };
+    // Handle navigation to registration
+    const handleCreateNew = () => {
+      navigate('/register');
+    };
 
   //Handle form submission
   const handleSubmit = async (e) =>{
     e.preventDefault();
 
     try{
-      await loginUser(formData); //Login user with from data
-    }catch(error){
+      const response = await loginUser(formData); // Login user with form data
+console.log("Login response",response);
+      // If login is successful, navigate to the dashboard
+      if (response.ok) {
+        showToast('Login successful!', 'success'); // Show success toast
+        navigate('/'); // Redirect to the dashboard
+      }else{
+        // toast.error(`Invalid credentials. Please try again.`);
+        showToast('Invalid credentials. Please try again.', 'error'); // Show error toast
+
+
+      }
+        }catch(error){
       console.error("Login request failed:",error);
+      showToast('Login failed. Please try again.', 'error'); // Show error toast
+
     }
   }
 
   return (
-    <MDBContainer className="my-5 gradient-form">
-      <form onSubmit={handleSubmit}>
+<div className="container  p-4">
+<form
+        className="mx-auto p-5 m-5  border border-light-subtle rounded shadow w-50 "
+        onSubmit={handleSubmit}
+      >
+          <div className="text-center">
+          <img
+            className="mb-4"
+            src={Logo}
+            alt="Logo"
+            style={{ maxWidth: "300px" }}
+          />
+           <h4 className="mt-1 mb-5 pb-1">We are The VendiCore Team</h4>
+           <p >Please login to your account</p>
 
-      <MDBRow>
-
-        <MDBCol col='6' className="mb-5">
-          <div className="d-flex flex-column ms-5">
-
-            <div className="text-center">
-              <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/lotus.webp"
-                style={{width: '185px'}} alt="logo" />
-              <h4 className="mt-1 mb-5 pb-1">We are The VendiCore Team</h4>
-           
-
-            <p >Please login to your account</p>
-
-            </div>
-            <MDBInput wrapperClass='mb-4' label='Email address' id='email' type='email'                  value={formData.email}
-               onChange={handleChange}
-            />
-            <MDBInput wrapperClass='mb-4' label='Password' id='password' type='password'                 value={formData.password}
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="inputEmail" className="form-label ">
+            Email address
+          </label>
+          <input
+            type="email"
+            className="form-control"
+            label='Email address' id='email'    
+            value={formData.email}   
+                     onChange={handleChange}
+            aria-describedby="emailHelp"
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="passwordInput" 
+          className="form-label mt-2">
+            Password
+          </label>
+          <input
+            type="password"
+            className="form-control"
+            label='Password' id='password'                 
+             value={formData.password}
                 onChange={handleChange}
-            />
+          />
+        </div>
+        <div className="text-center ">
+          <button
+            type="submit"
+            className="btn  mt-5 text-white w-25"
+            style={{ backgroundColor: "#0455bf" }}
+          >
+            Login
+          </button>
+        </div>
+        <p className='mt-2'>
+          Don't have an account ?{" "}
+          <Link to="/register" style={{ textDecoration: "#0455bf" }}>
+            Create an account
+          </Link>
+        </p>
+        </form>
+        
 
-
-            <div className="text-center pt-1 mb-5 pb-1">
-              <MDBBtn className="mb-4 w-100 gradient-custom-2">Sign in</MDBBtn>
-              <a className="text-muted" href="#!">Forgot password?</a>
-            </div>
-
-            <div className="d-flex flex-row align-items-center justify-content-center pb-4 mb-4">
-              <p className="mb-0">Don't have an account?</p>
-              <MDBBtn outline className='mx-2' color='danger'>
-                Create New
-              </MDBBtn>
-            </div>
-
-          </div>
-
-        </MDBCol>
-
-<MDBCol col='6' className="mb-5">
-  <div className="d-flex flex-column justify-content-center gradient-custom-2 h-100 mb-4">
-    {/* <div className="text-white px-3 py-4 p-md-5 mx-md-4"> */}
-      <img 
-    src="https://static.vecteezy.com/system/resources/previews/029/840/418/large_2x/e-commerce-shopping-cart-with-multiple-products-a-sunlit-abstract-background-e-commerce-concept-ai-generative-free-photo.jpg"
-    alt="E-commerce concept" 
-        className="img-fluid"
-      />
-    </div>
-  {/* </div> */}
-</MDBCol>
-
-      </MDBRow>
-      </form>
-
-    </MDBContainer>
+</div>
   )
 }
 
