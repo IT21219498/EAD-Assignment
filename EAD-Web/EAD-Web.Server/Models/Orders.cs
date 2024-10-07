@@ -24,6 +24,12 @@ namespace EAD_Web.Server.Models
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime OrderDate { get; set; }  // Date the order was created
 
+        [BsonElement("address")]
+        public string? Address { get; set; }  
+
+        [BsonElement("isPaid")]
+        public bool IsPaid { get; set; } 
+
         [BsonElement("createdAt")]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime CreatedAt { get; set; }  // Date the order was created
