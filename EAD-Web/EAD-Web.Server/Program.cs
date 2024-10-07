@@ -58,6 +58,8 @@ builder.Services.AddAuthentication(options =>
 });
 
 
+
+
 // Add Identity services
 //Users-Admin,vendor,CSR
 builder.Services.AddIdentity<Users, MongoIdentityRole<ObjectId>>()

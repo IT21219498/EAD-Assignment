@@ -107,14 +107,15 @@ namespace EAD_Web.Server.Controllers
                 return BadRequest(result.Errors);
             }
 
-            // Custom message based on the role
+            // Custom message based on the role, returned as a JSON object
             if (model.Role == "Vendor")
             {
-                return Ok("Account is pending approval.");
+                return Ok(new { message = "Account is pending approval." });
             }
 
-            return Ok("User registered successfully.");
+            return Ok(new { message = "User registered successfully." });
         }
+
 
         [HttpGet("pending-approvals")]
         public async Task<IActionResult> GetPendingApprovals()
@@ -147,6 +148,46 @@ namespace EAD_Web.Server.Controllers
 
             return Ok("User approved successfully.");
         }
+
+        [HttpGet("chk")]
+        public IActionResult CheckToken()
+        {
+            try
+            {
+                // Get the user ID from the claims (JWT token is already validated via middleware)
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized("Invalid token or user ID not found.");
+                }
+
+                // Fetch the user details (optional: you could also return limited user data)
+                var user = _userManager.FindByIdAsync(userId).Result;
+
+                if (user == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                // Return the user's details
+                return Ok(new
+                {
+                    userId = user.Id.ToString(),
+                    user.Email,
+                    user.FullName,
+                    user.Role,
+                    user.IsActive,
+                    user.CreatedAt,
+                    user.UpdatedAt
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
 
 
     }
