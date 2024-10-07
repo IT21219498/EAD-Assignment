@@ -11,11 +11,9 @@ export const AuthContextProvider = ({ children }) => {
 
     useEffect(() => {
         if (!user) {
-            navigate('/login', { replace: true });
-        } else {
             checkUserLoggedIn();
         }
-    }, [user]);
+    }, [ navigate]);
 
 
       const checkUserLoggedIn = async () => {
@@ -33,7 +31,9 @@ export const AuthContextProvider = ({ children }) => {
         if (response.ok) {
             const userData = await response.json();
             console.log('User Data:', userData);
-            setUser(userData.role);
+            const { userId, role } = userData;
+
+            // setUser({userId,role});
         //     if (
         //         location.pathname === '/login' ||
         //         location.pathname === '/register'
@@ -45,11 +45,16 @@ export const AuthContextProvider = ({ children }) => {
         //         navigate(location.pathname ? location.pathname : '/');
         //   }
          }
+
         else {
+            setUser(null);
+            sessionStorage.clear();
             navigate('/login', { replace: true });
         }
 
     }  catch(err){
+        setUser(null);
+        sessionStorage.clear();
         console.log(err);
         navigate('/login', { replace: true });
     }
@@ -72,10 +77,10 @@ export const AuthContextProvider = ({ children }) => {
                 const { token, userId, role } = result;
     
                 sessionStorage.setItem('token', token);
-                sessionStorage.setItem('userId', userId);
-                sessionStorage.setItem('role', role);
+                // sessionStorage.setItem('userId', userId);
+                // sessionStorage.setItem('role', role);
 
-                setUser(role);
+                setUser({userId,role});
 
     
                 return response; 
