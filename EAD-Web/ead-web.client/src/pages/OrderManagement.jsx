@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
   Table,
   Form,
@@ -24,8 +24,10 @@ import {
 } from "../apis/orders";
 import Toast from "../components/Toast";
 import ConfirmAction from "../components/ConfirmAction";
+import AuthContext from "../contexts/AuthContext";
 
 const OrderManagement = () => {
+  const { user, setUser } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
@@ -66,17 +68,6 @@ const OrderManagement = () => {
 
   const [newOrder, setNewOrder] = useState(defaultOrder);
 
-  // const defaultPaginationDetails = {
-  //   page: 1,
-  //   pageSize: 5,
-  //   totalPages: 1,
-  //   totalItems: 0,
-  // };
-
-  // const [orderPaginationData, setOrderPaginationData] = useState(
-  //   defaultPaginationDetails
-  // );
-
   const loadOrders = useCallback(
     async (search, page = 1, pageSize = 5, searchcolumn) => {
       if (!search) {
@@ -89,8 +80,6 @@ const OrderManagement = () => {
         if (data.status === "NOK") {
           if (!showModal) handleToastShow(data.message, "danger");
           setOrders([]);
-          // setOrderPaginationData(defaultPaginationDetails);
-
           return;
         }
         if (data.data.length === 0) {
@@ -101,12 +90,6 @@ const OrderManagement = () => {
           return;
         }
         setOrders(data.data);
-        // setOrderPaginationData({
-        //   page: data.page,
-        //   pageSize: data.page_size,
-        //   totalPages: data.total_pages,
-        //   totalItems: data.total_customers,
-        // });
       } catch (err) {
         setOrders([]);
         console.error(err.message);
@@ -115,6 +98,7 @@ const OrderManagement = () => {
     },
     []
   );
+
   const loadInvoiceNo = useCallback(async () => {
     try {
       const data = await fetchMaxInvoice();
@@ -131,6 +115,7 @@ const OrderManagement = () => {
       handleToastShow("Error loading outlets", "danger");
     }
   }, []);
+
   const loadProducts = useCallback(async () => {
     try {
       const data = await fetchProducts();
@@ -199,6 +184,9 @@ const OrderManagement = () => {
   const handleModalShow = (order = null) => {
     if (order) {
       setEditingOrder(order);
+      if (!order.orderItems.length) {
+        order.orderItems = [deaultOrderItem];
+      }
       setNewOrder(order);
     } else {
       setNewOrder({ ...defaultOrder, invoiceNo: loadInvoiceNo() });
@@ -253,14 +241,12 @@ const OrderManagement = () => {
       }
       handleToastShow(response.message, "success");
       loadOrders();
+      handleModalClose();
       return;
     } catch (error) {
       console.error(error);
       handleToastShow("Error saving order", "danger");
     }
-
-    // setOrders([...orders, response.data]);
-    // }
   };
 
   // const handleDeleteProduct = (id) => {
@@ -302,13 +288,14 @@ const OrderManagement = () => {
     fetchData();
   }, [loadOrders, loadCustomers, loadInvoiceNo, loadProducts]);
 
-  const handleShowConfirm = (type, id) => {
-    setActionType(type);
-    setSelectedOrderId(id);
-    setShowConfirm(true);
-  };
+  // const handleShowConfirm = (type, id) => {
+  //   setActionType(type);
+  //   setSelectedOrderId(id);
+  //   setShowConfirm(true);
+  // };
+
   const handleConfirmAction = async () => {
-    setShowSpinner(true); // Show spinner before starting the action
+    setShowSpinner(true);
     try {
       if (actionType === "delete") {
         await deleteOrder(selectedOrderId);
@@ -406,20 +393,24 @@ const OrderManagement = () => {
                     <td>{order.orderDate}</td>
                     <td>{order.status}</td>
                     <td className="text-center">
-                      <OverlayTrigger
-                        placement="top"
-                        overlay={<Tooltip>Edit Order</Tooltip>}
-                      >
-                        <Button
-                          variant="outline-secondary"
-                          onClick={() => handleModalShow(order)}
-                          className="mx-2"
-                        >
-                          <FaEdit />
-                        </Button>
-                      </OverlayTrigger>
+                      {order.status !== "Delivered" &&
+                        order.status !== "Partially Delivered" &&
+                        order.status !== "Cancelled" && (
+                          <OverlayTrigger
+                            placement="top"
+                            overlay={<Tooltip>Edit Order</Tooltip>}
+                          >
+                            <Button
+                              variant="outline-secondary"
+                              onClick={() => handleModalShow(order)}
+                              className="mx-2"
+                            >
+                              <FaEdit />
+                            </Button>
+                          </OverlayTrigger>
+                        )}
 
-                      <OverlayTrigger
+                      {/* <OverlayTrigger
                         placement="top"
                         overlay={<Tooltip>Delete Order</Tooltip>}
                       >
@@ -429,7 +420,7 @@ const OrderManagement = () => {
                         >
                           <RiDeleteBin5Line />
                         </Button>
-                      </OverlayTrigger>
+                      </OverlayTrigger> */}
                     </td>
                   </tr>
                 ))}

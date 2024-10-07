@@ -1,22 +1,21 @@
 // src/components/Navbar.jsx
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from "react";
 import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import proptype from "prop-types";
 import logo from "../assets/EADlogo.png";
 import { FaRegUserCircle } from "react-icons/fa";
-import AuthContext from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-
+import AuthContext from "../contexts/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 
 const NavigationBar = ({ userRole }) => {
   const navigate = useNavigate();
 
-  console.log("User roleeee",userRole);
+  console.log("User roleeee", userRole);
   const { user, setUser } = useContext(AuthContext);
 
-    // useEffect hook to redirect to login if user is not authenticated
+  // useEffect hook to redirect to login if user is not authenticated
   useEffect(() => {
-    !user && navigate('/login', { replace: true });
+    !user && navigate("/login", { replace: true });
   }, []);
 
   const handleLogout = () => {
@@ -26,8 +25,6 @@ const NavigationBar = ({ userRole }) => {
     // Redirect to the login page
     window.location.href = "/login";
   };
-
-
 
   return (
     <Navbar bg="light" expand="lg">
@@ -45,22 +42,22 @@ const NavigationBar = ({ userRole }) => {
           <Nav className="me-auto">
             {/* Common Links */}
             <Nav.Link href="/">Home</Nav.Link>
-            {user === "Admin" && (
-              <>
-                {/* Admin-Specific Links */}
-                <NavDropdown
-                  title="Order Management"
-                  id="order-management-dropdown"
-                >
-                  <NavDropdown.Item href="/OrderManagement">
-                    Orders
-                  </NavDropdown.Item>
+            <>
+              {/* Admin-Specific Links */}
+              <NavDropdown
+                title="Order Management"
+                id="order-management-dropdown"
+              >
+                <NavDropdown.Item href="/OrderManagement">
+                  Orders
+                </NavDropdown.Item>
+                {user === "Admin" && (
                   <NavDropdown.Item href="/ConfirmOrder">
                     Ready Orders
                   </NavDropdown.Item>
-                </NavDropdown>
-              </>
-            )}
+                )}
+              </NavDropdown>
+            </>
 
             {user === "Admin" && (
               <>
@@ -81,8 +78,7 @@ const NavigationBar = ({ userRole }) => {
                 </NavDropdown>
               </>
             )}
-
-{user === "Admin" && (
+            {user === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -90,7 +86,7 @@ const NavigationBar = ({ userRole }) => {
                   id="user-management-dropdown"
                 >
                   <NavDropdown.Item href="PendingUsers">
-                    Vendor Account  Management
+                    Vendor Account Management
                   </NavDropdown.Item>
                   <NavDropdown.Item href="/CustomerActivation">
                     Customer Account Management
@@ -98,7 +94,6 @@ const NavigationBar = ({ userRole }) => {
                 </NavDropdown>
               </>
             )}
-
             {user === "Vendor" && (
               <>
                 {/* Vendor-Specific Links */}
@@ -115,7 +110,6 @@ const NavigationBar = ({ userRole }) => {
                 </NavDropdown>
               </>
             )}
-
             {user === "CSR" && (
               <>
                 {/* CSR-Specific Links */}
@@ -126,16 +120,14 @@ const NavigationBar = ({ userRole }) => {
                   title="Account Management"
                   id="csr-management-dropdown"
                 >
-                           <NavDropdown.Item href="/CustomerActivation">
+                  <NavDropdown.Item href="/CustomerActivation">
                     Customer Account Management
                   </NavDropdown.Item>
                   <NavDropdown.Item href="/ReActivateCustomer">
                     Account Re-Activation Management
-                  </NavDropdown.Item >
+                  </NavDropdown.Item>
                 </NavDropdown>
-              
               </>
-              
             )}
           </Nav>
           <Nav className="ms-auto">
