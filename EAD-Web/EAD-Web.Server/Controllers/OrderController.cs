@@ -49,7 +49,8 @@ namespace EAD_Web.Server.Controllers
                                 price = product.Price
                                 },
                                 quantity = orderItem.Quantity,
-                                price = orderItem.Price
+                                price = orderItem.Price,
+                                orderItemId = orderItem.OrderItemId
                             });
                         }
                     }
@@ -164,7 +165,7 @@ namespace EAD_Web.Server.Controllers
                 {
                     var stock = await _mongoContext.Stock.Find((s) => s.ProductId == product.Id).FirstOrDefaultAsync();
 
-                    if (stock == null || stock.Quantity <= 0)
+                    if (stock == null)
                         continue;
 
                     productsResponse.Add(new
@@ -172,6 +173,8 @@ namespace EAD_Web.Server.Controllers
                         name = product.Name,
                         id = product.Id.ToString(),
                         price = product?.Price,
+                        stock = stock.Quantity,
+
 
                     });
 
@@ -222,7 +225,7 @@ namespace EAD_Web.Server.Controllers
                         OrderId = newOrder.OrderId,
                         ProductId = item.Product.Id,
                         Quantity = item.Quantity,
-                        Price = item.Product.Price,
+                        Price = item.Product.Price * item.Quantity,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     };
@@ -305,11 +308,29 @@ namespace EAD_Web.Server.Controllers
             // Update order items
             foreach (var item in orderRequest.OrderItems)
             {
-                var orderItemFilter = Builders<OrderItems>.Filter.Eq(oi => oi.OrderId, orderId) &
-                                      Builders<OrderItems>.Filter.Eq(oi => oi.ProductId, item.Product.Id);
-                var orderItemUpdate = Builders<OrderItems>.Update
+                var orderItemFilter = Builders<OrderItems>.Filter.Eq(oi => oi.OrderItemId, item.OrderItemId);
+
+                    if (item.OrderItemId == null)
+                    {
+                        var newOrderItem = new OrderItems
+                        {
+                            OrderItemId = ObjectId.GenerateNewId().ToString(),
+                            OrderId = orderId,
+                            ProductId = item.Product.Id,
+                            Quantity = item.Quantity,
+                            Price = item.Product.Price,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+
+                        await _mongoContext.OrderItems.InsertOneAsync(newOrderItem);
+                        continue;
+                    }
+
+                    var orderItemUpdate = Builders<OrderItems>.Update
                     .Set(oi => oi.Quantity, item.Quantity)
-                    .Set(oi => oi.Price, item.Product.Price)
+                    .Set(oi => oi.Price, item.Product.Price * item.Quantity)
+                    .Set(oi => oi.ProductId, item.Product.Id)
                     .Set(oi => oi.UpdatedAt, DateTime.UtcNow);
 
                 await _mongoContext.OrderItems.UpdateOneAsync(orderItemFilter, orderItemUpdate);
