@@ -18,6 +18,14 @@ namespace EAD_Web.Server.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string? ProductId { get; set; }  // Foreign key linking to the Products collection
 
+        [BsonElement("vendorId")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? VendorId { get; set; }  // Freign key linking to the Vendors collection
+
+        [BsonElement("status")]
+        public string? Status { get; set; }  
+
+
         [BsonElement("quantity")]
         public int Quantity { get; set; }  // Number of items ordered
 

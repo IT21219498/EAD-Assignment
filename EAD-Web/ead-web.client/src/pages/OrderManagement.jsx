@@ -1,48 +1,81 @@
 import { useCallback, useEffect, useState } from "react";
-import { Table, Form, Button, Modal, Row, Col, Spinner } from "react-bootstrap";
-import { FaEdit } from "react-icons/fa";
+import {
+  Table,
+  Form,
+  Button,
+  Modal,
+  Row,
+  Col,
+  Spinner,
+  Pagination,
+  OverlayTrigger,
+  Tooltip,
+} from "react-bootstrap";
+import { FaEdit, FaPlus } from "react-icons/fa";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import {
+  deleteOrder,
   fetchCustomers,
   fetchMaxInvoice,
   fetchOrders,
   fetchProducts,
+  saveOrder,
+  updateOrder,
 } from "../apis/orders";
 import Toast from "../components/Toast";
+import ConfirmAction from "../components/ConfirmAction";
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
   const [showSpinner, setShowSpinner] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastVariant, setToastVariant] = useState("");
   const [toastMessage, setToastMessage] = useState("");
+  const itemsPerPage = 5; // Number of products to show per page
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentOrders = orders.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [actionType, setActionType] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
   const deaultOrderItem = {
-    name: "",
+    product: {
+      name: "",
+      id: "",
+    },
     quantity: 0,
-    price: 0,
   };
-
-  const [newOrder, setNewOrder] = useState({
-    invoiceNo: fetchMaxInvoice(),
-    customer: "",
+  const defaultOrder = {
+    invoiceNo: "",
+    customer: {
+      name: "",
+      email: "",
+      id: "",
+    },
     orderDate: "",
     status: "",
-    products: [deaultOrderItem],
-  });
-
-  const defaultPaginationDetails = {
-    page: 1,
-    pageSize: 5,
-    totalPages: 1,
-    totalItems: 0,
+    orderItems: [deaultOrderItem],
   };
 
-  const [orderPaginationData, setOrderPaginationData] = useState(
-    defaultPaginationDetails
-  );
+  const [newOrder, setNewOrder] = useState(defaultOrder);
+
+  // const defaultPaginationDetails = {
+  //   page: 1,
+  //   pageSize: 5,
+  //   totalPages: 1,
+  //   totalItems: 0,
+  // };
+
+  // const [orderPaginationData, setOrderPaginationData] = useState(
+  //   defaultPaginationDetails
+  // );
 
   const loadOrders = useCallback(
     async (search, page = 1, pageSize = 5, searchcolumn) => {
@@ -56,13 +89,13 @@ const OrderManagement = () => {
         if (data.status === "NOK") {
           if (!showModal) handleToastShow(data.message, "danger");
           setOrders([]);
-          setOrderPaginationData(defaultPaginationDetails);
+          // setOrderPaginationData(defaultPaginationDetails);
 
           return;
         }
         if (data.data.length === 0) {
           if (!showModal)
-            handleToastShow("No outlets found", "warning", "Warning");
+            handleToastShow("No orders found", "warning", "Warning");
           setOrders([]);
 
           return;
@@ -77,7 +110,7 @@ const OrderManagement = () => {
       } catch (err) {
         setOrders([]);
         console.error(err.message);
-        handleToastShow("Error loading outlets", "danger");
+        handleToastShow("Error loading orders", "danger");
       }
     },
     []
@@ -103,11 +136,18 @@ const OrderManagement = () => {
       const data = await fetchProducts();
       if (data.status === "NOK") {
         if (!showModal) handleToastShow(data.message, "danger");
-        setNewOrder((prev) => ({ ...prev, invoiceNo: "" }));
+        setProducts([]);
 
         return;
       }
-      setNewOrder((prev) => ({ ...prev, invoiceNo: data.data }));
+      if (data.data.length === 0) {
+        if (!showModal)
+          handleToastShow("No outlets found", "warning", "Warning");
+        setProducts([]);
+
+        return;
+      }
+      setProducts(data.data);
     } catch (err) {
       setOrders([]);
       console.error(err.message);
@@ -143,52 +183,98 @@ const OrderManagement = () => {
     const { name, value } = e.target;
     setNewOrder({ ...newOrder, [name]: value });
   };
+  const handleInputOrderItem = (e, index) => {
+    const { name, value } = e.target;
+    const list = [...newOrder.orderItems];
+    list[index][name] = value;
+    setNewOrder({ ...newOrder, orderItems: list });
+  };
 
   const handleModalClose = () => {
     setShowModal(false);
     setEditingOrder(null);
-    setNewOrder({ name: "", category: "", price: 0, active: false });
+    setNewOrder(defaultOrder);
   };
 
-  const handleModalShow = (product = null) => {
-    setNewOrder({
-      ...newOrder,
-      invoiceNo: loadInvoiceNo(),
-    });
-    if (product) {
-      setEditingOrder(product);
-      setNewOrder(product);
+  const handleModalShow = (order = null) => {
+    if (order) {
+      setEditingOrder(order);
+      setNewOrder(order);
+    } else {
+      setNewOrder({ ...defaultOrder, invoiceNo: loadInvoiceNo() });
     }
     setShowModal(true);
   };
 
-  const handleSaveProduct = () => {
-    if (editingOrder) {
-      setOrders(
-        orders.map((product) =>
-          product.id === editingOrder.id ? newOrder : product
-        )
-      );
-    } else {
-      setOrders([
-        ...orders,
-        { ...newOrder, id: orders.length + 1, active: false },
-      ]);
+  const validateOrder = () => {
+    if (!newOrder.customer.id) {
+      handleToastShow("Please select a customer", "danger");
+      return false;
     }
-    handleModalClose();
+    if (!newOrder.orderDate) {
+      handleToastShow("Please select an order date", "danger");
+      return false;
+    }
+    if (!newOrder.status) {
+      handleToastShow("Please select a status", "danger");
+      return false;
+    }
+    if (newOrder.orderItems.length === 0) {
+      handleToastShow("Please add products to the order", "danger");
+      return false;
+    }
+    for (let i = 0; i < newOrder.orderItems.length; i++) {
+      if (!newOrder.orderItems[i].product.id) {
+        handleToastShow("Please select a product", "danger");
+        return false;
+      }
+      if (newOrder.orderItems[i].quantity <= 0) {
+        handleToastShow("Quantity should be greater than 0", "danger");
+        return false;
+      }
+    }
+    return true;
   };
 
-  const handleDeleteProduct = (id) => {
-    setOrders(orders.filter((product) => product.id !== id));
+  const handleSaveOrder = async () => {
+    if (!validateOrder()) {
+      return;
+    }
+    try {
+      let response;
+      if (editingOrder) {
+        response = await updateOrder(newOrder);
+      } else {
+        response = await saveOrder(newOrder);
+      }
+      if (response.status === "NOK") {
+        handleToastShow(response.message, "danger");
+        handleModalClose();
+      }
+      handleToastShow(response.message, "success");
+      loadOrders();
+      return;
+    } catch (error) {
+      console.error(error);
+      handleToastShow("Error saving order", "danger");
+    }
+
+    // setOrders([...orders, response.data]);
+    // }
   };
 
-  const toggleProductStatus = (id) => {
-    setOrders(
-      orders.map((product) =>
-        product.id === id ? { ...product, active: !product.active } : product
-      )
-    );
-  };
+  // const handleDeleteProduct = (id) => {
+  //   setOrders(orders.filter((product) => product.id !== id));
+  // };
+
+  // const toggleProductStatus = (id) => {
+  //   setOrders(
+  //     orders.map((product) =>
+  //       product.id === id ? { ...product, active: !product.active } : product
+  //     )
+  //   );
+  // };
+
   const handleToastShow = (message, variant) => {
     setShowToast(true);
     setToastVariant(variant);
@@ -216,6 +302,44 @@ const OrderManagement = () => {
     fetchData();
   }, [loadOrders, loadCustomers, loadInvoiceNo, loadProducts]);
 
+  const handleShowConfirm = (type, id) => {
+    setActionType(type);
+    setSelectedOrderId(id);
+    setShowConfirm(true);
+  };
+  const handleConfirmAction = async () => {
+    setShowSpinner(true); // Show spinner before starting the action
+    try {
+      if (actionType === "delete") {
+        await deleteOrder(selectedOrderId);
+      } else if (actionType === "updateStatus") {
+        // Uncomment and implement this if needed
+        // await toggleProductStatus(
+        //   products.find((p) => p.id === selectedOrderId)
+        // );
+      }
+      setShowConfirm(false); // Hide confirmation dialog
+      await loadOrders(); // Reload orders
+    } catch (error) {
+      console.error("Error during action:", error);
+    } finally {
+      setShowSpinner(false); // Hide spinner after the action is complete
+    }
+  };
+  const handleAddOrderItem = () => {
+    setNewOrder((prev) => ({
+      ...prev,
+      orderItems: [...prev.orderItems, deaultOrderItem],
+    }));
+  };
+
+  const handleRemoveOrderItem = (e, index) => {
+    e.preventDefault();
+    const list = [...newOrder.orderItems];
+    list.splice(index, 1);
+    setNewOrder({ ...newOrder, orderItems: list });
+  };
+
   return (
     <>
       {showToast && (
@@ -227,6 +351,19 @@ const OrderManagement = () => {
           handleClose={handleToastClose}
         />
       )}
+      <ConfirmAction
+        show={showConfirm}
+        onHide={() => setShowConfirm(false)}
+        onConfirm={handleConfirmAction}
+        title="Are you sure?"
+        message={
+          actionType === "delete"
+            ? "This will permanently delete the order."
+            : "This will change the product's status."
+        }
+        confirmLabel={actionType === "delete" ? "Delete" : "Yes, Update"}
+        confirmVariant={actionType === "delete" ? "danger" : "primary"}
+      />
 
       <div className="container ">
         <h2 className="d-flex justify-content-center">Orders</h2>
@@ -248,54 +385,93 @@ const OrderManagement = () => {
               <th>Actions</th>
             </tr>
           </thead>
-          {showSpinner && (
-            <div className="d-flex flex-column justify-content-center align-items-center mt-5">
-              <Spinner animation="grow" />
-              <p className="mt-1">Please Wait...</p>
-            </div>
-          )}
-          {!showSpinner && orders && orders.length != 0 && (
-            <tbody>
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td>{order.invoiceNo}</td>
-                  <td>{order.email}</td>
-                  <td>{order.orderDate}</td>
-                  <td>{order.status}</td>
-                  {/* <td>{order.isActive ? "Active" : "Inactive"}</td>
-              <td>
-                <Button
-                  variant={order.active ? "danger" : "success"}
-                  onClick={() => toggleProductStatus(order.id)}
-                  className="me-2"
-                >
-                  {order.active ? "Deactivate" : "Activate"}
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => handleModalShow(order)}
-                  className="mx-2"
-                >
-                  <FaEdit />
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => handleDeleteProduct(order.id)}
-                >
-                  <RiDeleteBin5Line />
-                </Button>
-              </td> */}
-                </tr>
-              ))}
-            </tbody>
-          )}
+
+          <tbody>
+            {showSpinner && (
+              <tr>
+                <td colSpan="5">
+                  <div className="d-flex justify-content-center align-items-center">
+                    <Spinner animation="grow" />
+                    <p className="mt-1 ml-2">Please Wait...</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+            {!showSpinner && currentOrders && currentOrders.length !== 0 && (
+              <>
+                {currentOrders.map((order) => (
+                  <tr key={order.id}>
+                    <td>{order.invoiceNo}</td>
+                    <td>{order.customer.email}</td>
+                    <td>{order.orderDate}</td>
+                    <td>{order.status}</td>
+                    <td className="text-center">
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={<Tooltip>Edit Order</Tooltip>}
+                      >
+                        <Button
+                          variant="outline-secondary"
+                          onClick={() => handleModalShow(order)}
+                          className="mx-2"
+                        >
+                          <FaEdit />
+                        </Button>
+                      </OverlayTrigger>
+
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={<Tooltip>Delete Order</Tooltip>}
+                      >
+                        <Button
+                          variant="outline-danger"
+                          onClick={() => handleShowConfirm("delete", order.id)}
+                        >
+                          <RiDeleteBin5Line />
+                        </Button>
+                      </OverlayTrigger>
+                    </td>
+                  </tr>
+                ))}
+              </>
+            )}
+          </tbody>
         </Table>
+        <Pagination className="justify-content-center">
+          <Pagination.First
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+          />
+          <Pagination.Prev
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          />
+
+          {[...Array(totalPages)].map((_, i) => (
+            <Pagination.Item
+              key={i + 1}
+              active={i + 1 === currentPage}
+              onClick={() => handlePageChange(i + 1)}
+            >
+              {i + 1}
+            </Pagination.Item>
+          ))}
+
+          <Pagination.Next
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          />
+          <Pagination.Last
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+          />
+        </Pagination>
 
         {/* Modal for Add/Edit Product */}
         <Modal show={showModal} onHide={handleModalClose} size="xl">
           <Modal.Header closeButton>
             <Modal.Title>
-              {editingOrder ? "Edit Product" : "Add New Order"}
+              {editingOrder ? "Edit Order" : "Add New Order"}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -309,7 +485,6 @@ const OrderManagement = () => {
                       name="invoiceNo"
                       value={newOrder.invoiceNo}
                       onChange={handleInputChange}
-                      placeholder="Enter product name"
                       disabled
                     />
                   </Form.Group>
@@ -318,16 +493,26 @@ const OrderManagement = () => {
                   <Form.Label>Customer</Form.Label>
                   <Form.Select
                     name="customer"
-                    value={newOrder.customer}
-                    onChange={handleInputChange}
+                    value={newOrder.customer.id || ""}
+                    onChange={(e) => {
+                      let selectedCustomer = customers.find(
+                        (customer) => customer.id === e.target.value
+                      );
+                      if (!selectedCustomer) {
+                        selectedCustomer = { id: "", name: "Select Customer" };
+                      }
+                      handleInputChange({
+                        target: {
+                          name: "customer",
+                          value: selectedCustomer,
+                        },
+                      });
+                    }}
                   >
                     <option value="">Select Customer</option>
-                    {customers.map((category) => (
-                      <option
-                        key={category.id.timestamp}
-                        value={category.id.timestamp}
-                      >
-                        {category.name}
+                    {customers.map((customer) => (
+                      <option key={customer.id} value={customer.id}>
+                        {customer.name}
                       </option>
                     ))}
                   </Form.Select>
@@ -352,11 +537,11 @@ const OrderManagement = () => {
                       onChange={handleInputChange}
                     >
                       <option value="">Select Status</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Delivered">Delivered</option>
+                      <option value="Processing">Processing</option>
                       <option value="Partially Delivered">
                         Partially Delivered
                       </option>
+                      <option value="Delivered">Delivered</option>
                       <option value="Cancelled">Cancelled</option>
                     </Form.Select>
                   </Form.Group>
@@ -373,30 +558,101 @@ const OrderManagement = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {newOrder.products.map((product, index) => (
+                  {newOrder.orderItems.map((product, index) => (
                     <tr key={index}>
-                      <td>{product.name}</td>
-                      <td>{product.quantity}</td>
-                      <td>{product.price}</td>
-                      <td>{product.price * product.quantity}</td>
                       <td>
-                        <Button variant="danger">Delete</Button>
+                        <Form.Select
+                          key={index}
+                          name="product"
+                          value={product?.product?.id || ""}
+                          onChange={(e) => {
+                            let selectedProduct = products.find(
+                              (product) => product.id === e.target.value
+                            );
+                            if (!selectedProduct) {
+                              selectedProduct = {
+                                id: "",
+                                name: "Select Product",
+                              };
+                            }
+
+                            handleInputOrderItem(
+                              {
+                                target: {
+                                  name: "product",
+                                  value: selectedProduct,
+                                },
+                              },
+                              index
+                            );
+                          }}
+                        >
+                          <option value="">Select Product</option>
+                          {products.map((product) => (
+                            <option key={product.id} value={product.id}>
+                              {product.name}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </td>
+                      <td>
+                        <Form.Control
+                          type="number"
+                          name="quantity"
+                          value={product.quantity}
+                          onChange={(e) => handleInputOrderItem(e, index)}
+                        />
+                      </td>
+                      <td>
+                        <Form.Control
+                          type="number"
+                          name="price"
+                          value={product?.product?.price || 0}
+                          disabled={true}
+                        />
+                      </td>
+
+                      <td>{product.quantity * product?.product?.price || 0}</td>
+                      <td>
+                        {index === newOrder.orderItems.length - 1 && (
+                          <OverlayTrigger
+                            placement="top"
+                            overlay={<Tooltip>Add Product</Tooltip>}
+                          >
+                            <Button
+                              variant="outline-secondary"
+                              onClick={() => handleAddOrderItem(product)}
+                              className="mx-2"
+                            >
+                              <FaPlus />
+                            </Button>
+                          </OverlayTrigger>
+                        )}
+                        <OverlayTrigger
+                          placement="top"
+                          overlay={<Tooltip>Delete Product</Tooltip>}
+                        >
+                          <Button
+                            variant="outline-secondary"
+                            onClick={(e) => handleRemoveOrderItem(e, index)}
+                            className="mx-2"
+                          >
+                            <RiDeleteBin5Line />
+                          </Button>
+                        </OverlayTrigger>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </Table>
-              <Button variant="primary" onClick={() => handleModalShow()}>
-                Add Product
-              </Button>
             </Form>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleModalClose}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleSaveProduct}>
-              {editingOrder ? "Update Product" : "Add Product"}
+            <Button variant="primary" onClick={handleSaveOrder}>
+              {editingOrder ? "Update Order" : "Add Order"}
             </Button>
           </Modal.Footer>
         </Modal>

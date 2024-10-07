@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using System;
+using EAD_Web.Server.DTOs;
 
 namespace EAD_Web.Server.Controllers
 {
@@ -42,7 +43,11 @@ namespace EAD_Web.Server.Controllers
                         {
                             orderItemResponse.Add(new
                             {
-                                productName = product.Name,
+                                product = new { 
+                                name = product.Name,
+                                id = product.Id,
+                                price = product.Price
+                                },
                                 quantity = orderItem.Quantity,
                                 price = orderItem.Price
                             });
@@ -53,7 +58,12 @@ namespace EAD_Web.Server.Controllers
                     {
                         id = order.OrderId.ToString(),
                         invoiceNo = order.InvoiceNo,
-                        email = user?.Email ?? "N/A",
+                        customer = new
+                        {
+                            email = user?.Email ?? "N/A",
+                            id = user?.CustomerId.ToString(),
+                            name = user?.FullName
+                        },
                         status = order.Status,
                         orderItems = orderItemResponse,
                         orderDate = order.OrderDate.Date.ToString("yyyy-MM-dd"),
@@ -93,7 +103,7 @@ namespace EAD_Web.Server.Controllers
                 return Ok(new
                 {
                     status = "OK",
-                    data = maxInvoiceNo
+                    data = (int)maxInvoiceNo + 1
                 });
             }
             catch (Exception)
@@ -119,9 +129,10 @@ namespace EAD_Web.Server.Controllers
                    customersResponse.Add(new
                     {
                        name = customer.FullName,
-                       Id = customer.CustomerId.ToString(),
-                             
-                    });
+                       id = customer.CustomerId.ToString(),
+                       email = customer?.Email ?? "N/A",
+
+                   });
                                                      
                 }
 
@@ -151,11 +162,16 @@ namespace EAD_Web.Server.Controllers
 
                 foreach (var product in products)
                 {
+                    var stock = await _mongoContext.Stock.Find((s) => s.ProductId == product.Id).FirstOrDefaultAsync();
+
+                    if (stock == null || stock.Quantity <= 0)
+                        continue;
 
                     productsResponse.Add(new
                     {
                         name = product.Name,
-                        Id = product.Id.ToString(),
+                        id = product.Id.ToString(),
+                        price = product?.Price,
 
                     });
 
@@ -177,113 +193,392 @@ namespace EAD_Web.Server.Controllers
                 });
             }
         }
-        //[HttpPost("addDummyOrders")]
-        //public async Task<ActionResult> AddDummyOrders()
-        //{
-        //    try
-        //    {
-        //        var dummyOrders = new List<Orders>
-        //{
-        //    new Orders
-        //    {
-        //        OrderId = ObjectId.GenerateNewId().ToString(),
-        //        InvoiceNo = 1001,
-        //        CustomerId = "66ffac55612591d5a1c41fe0",
-        //        Status = "Processing",
-        //        OrderDate = DateTime.UtcNow,
-        //        CreatedAt = DateTime.UtcNow,
-        //        UpdatedAt = DateTime.UtcNow
-        //    },
-        //    new Orders
-        //    {
-        //        OrderId = ObjectId.GenerateNewId().ToString(),
-        //        InvoiceNo = 1002,
-        //        CustomerId = "66ffaccf8b1b2653f83abaf9",
-        //        Status = "Delivered",
-        //        OrderDate = DateTime.UtcNow,
-        //        CreatedAt = DateTime.UtcNow,
-        //        UpdatedAt = DateTime.UtcNow
-        //    },
-        //    new Orders
-        //    {
-        //        OrderId = ObjectId.GenerateNewId().ToString(),
-        //        InvoiceNo = 1003,
-        //        CustomerId = "66ffaccf8b1b2653f83abaf9",
-        //        Status = "Cancelled",
-        //        OrderDate = DateTime.UtcNow,
-        //        CreatedAt = DateTime.UtcNow,
-        //        UpdatedAt = DateTime.UtcNow
-        //    },
-        //    new Orders
-        //    {
-        //        OrderId = ObjectId.GenerateNewId().ToString(),
-        //        InvoiceNo = 1004,
-        //        CustomerId = "66ffac55612591d5a1c41fe0",
-        //        Status = "Processing",
-        //        OrderDate = DateTime.UtcNow,
-        //        CreatedAt = DateTime.UtcNow,
-        //        UpdatedAt = DateTime.UtcNow
-        //    }
-        //};
+        [HttpPost("saveOrder")]
+        public async Task<ActionResult> SaveOrder([FromBody] SaveOrderDTO orderRequest)
+        {
+            try
+            {
+                // Create a new order
+                var newOrder = new Orders
+                {
+                    OrderId = ObjectId.GenerateNewId().ToString(),
+                    InvoiceNo = orderRequest.InvoiceNo,
+                    CustomerId = orderRequest.Customer.Id,
+                    Status = orderRequest.Status,
+                    OrderDate = orderRequest.OrderDate,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
 
-        //        var dummyOrderItems = new List<OrderItems>
-        //{
-        //    new OrderItems
-        //    {
-        //        OrderItemId = ObjectId.GenerateNewId().ToString(),
-        //        OrderId = dummyOrders[0].OrderId,
-        //        ProductId = "66fc3fc02c116c3d054f1c89",
-        //        Quantity = 2,
-        //        Price = 10.00m,
-        //        CreatedAt = DateTime.UtcNow,
-        //        UpdatedAt = DateTime.UtcNow
-        //    },
-        //    new OrderItems
-        //    {
-        //        OrderItemId = ObjectId.GenerateNewId().ToString(),
-        //        OrderId = dummyOrders[1].OrderId,
-        //        ProductId = "670015204e145f341a5a3abc",
-        //        Quantity = 1,
-        //        Price = 20.00m,
-        //        CreatedAt = DateTime.UtcNow,
-        //        UpdatedAt = DateTime.UtcNow
-        //    },
-        //    new OrderItems
-        //    {
-        //        OrderItemId = ObjectId.GenerateNewId().ToString(),
-        //        OrderId = dummyOrders[2].OrderId,
-        //        ProductId = "670015204e145f341a5a3abd",
-        //        Quantity = 3,
-        //        Price = 15.00m,
-        //        CreatedAt = DateTime.UtcNow,
-        //        UpdatedAt = DateTime.UtcNow
-        //    },
-        //    new OrderItems
-        //    {
-        //        OrderItemId = ObjectId.GenerateNewId().ToString(),
-        //        OrderId = dummyOrders[3].OrderId,
-        //        ProductId = "670015214e145f341a5a3abe",
-        //        Quantity = 5,
-        //        Price = 5.00m,
-        //        CreatedAt = DateTime.UtcNow,
-        //        UpdatedAt = DateTime.UtcNow
-        //    }
-        //};
+                // Insert the new order into the Orders collection
+                await _mongoContext.Orders.InsertOneAsync(newOrder);
 
-        //        await _mongoContext.Orders.InsertManyAsync(dummyOrders);
-        //        await _mongoContext.OrderItems.InsertManyAsync(dummyOrderItems);
+                // Create and insert order items
+                foreach (var item in orderRequest.OrderItems)
+                {
+                    var newOrderItem = new OrderItems
+                    {
+                        OrderItemId = ObjectId.GenerateNewId().ToString(),
+                        OrderId = newOrder.OrderId,
+                        ProductId = item.Product.Id,
+                        Quantity = item.Quantity,
+                        Price = item.Product.Price,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
 
-        //        return Ok("Dummy orders and order items added successfully.");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new
-        //        {
-        //            status = "NOK",
-        //            message = $"An error occurred while adding dummy orders and order items: {ex.Message}"
-        //        });
-        //    }
-        //}
+                    await _mongoContext.OrderItems.InsertOneAsync(newOrderItem);
+                }
+
+                return Ok(new
+                {
+                    status = "OK",
+                    message = "Order saved successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "NOK",
+                    message = "An error occurred while saving the order"
+                });
+            }
+        }
+
+        [HttpDelete("deleteOrder/{orderId}")]
+        public async Task<ActionResult> DeleteOrder(string orderId)
+        {
+            try
+            {
+                var deleteOrderResult = await _mongoContext.Orders.DeleteOneAsync(o => o.OrderId == orderId);
+
+                if (deleteOrderResult.DeletedCount == 0)
+                {
+                    return NotFound(new
+                    {
+                        status = "NOK",
+                        message = "Order not found"
+                    });
+                }
+
+                // Delete the associated order items
+                await _mongoContext.OrderItems.DeleteManyAsync(oi => oi.OrderId == orderId);
+
+                return Ok(new
+                {
+                    status = "OK",
+                    message = "Order and associated order items deleted successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "NOK",
+                    message = "An error occurred while deleting the order"
+                });
+            }
+
+            
+        }
+        [HttpPut("updateOrder/{orderId}")]
+        public async Task<ActionResult> UpdateOrder(string orderId, [FromBody] SaveOrderDTO orderRequest)
+        {
+            try
+            {
+                var filter = Builders<Orders>.Filter.Eq(o => o.OrderId, orderId);
+            var update = Builders<Orders>.Update
+                .Set(o => o.InvoiceNo, orderRequest.InvoiceNo)
+                .Set(o => o.CustomerId, orderRequest.Customer.Id)
+                .Set(o => o.Status, orderRequest.Status)
+                .Set(o => o.OrderDate, orderRequest.OrderDate)
+                .Set(o => o.UpdatedAt, DateTime.UtcNow);
+
+            var result = await _mongoContext.Orders.UpdateOneAsync(filter, update);
+
+            if (result.ModifiedCount == 0)
+            {
+                return NotFound(new { Message = "Order not found or no changes detected." });
+            }
+
+            // Update order items
+            foreach (var item in orderRequest.OrderItems)
+            {
+                var orderItemFilter = Builders<OrderItems>.Filter.Eq(oi => oi.OrderId, orderId) &
+                                      Builders<OrderItems>.Filter.Eq(oi => oi.ProductId, item.Product.Id);
+                var orderItemUpdate = Builders<OrderItems>.Update
+                    .Set(oi => oi.Quantity, item.Quantity)
+                    .Set(oi => oi.Price, item.Product.Price)
+                    .Set(oi => oi.UpdatedAt, DateTime.UtcNow);
+
+                await _mongoContext.OrderItems.UpdateOneAsync(orderItemFilter, orderItemUpdate);
+            }
+
+                return Ok(new
+                {
+                    status = "OK",
+                    message = "Order updated successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "NOK",
+                    message = $"An error occurred while updating order"
+                });
+            }
+        }
+        [HttpGet("vendor/{vendorId}/new")]
+        public async Task<IActionResult> GetNewOrderItemsByVendorId(string vendorId)
+        {
+            try
+            {
+                var orderItems = await _mongoContext.OrderItems
+                    .Find(oi => oi.VendorId == vendorId && oi.Status == "Paid" )
+                    .ToListAsync();
+           
+                var response = new List<object>();
+
+                foreach (var orderItem in orderItems)
+                {
+                    var order = await _mongoContext.Orders.Find(o => o.OrderId == orderItem.OrderId).FirstOrDefaultAsync();
+                    if (order == null || order.Status == "Cancelled")
+                    {
+                        continue;
+                    }
+                 
+                    var product = await _mongoContext.Products.Find(p => p.Id == orderItem.ProductId).FirstOrDefaultAsync();
+                    if (product == null)
+                        continue;
+                    var stock = await _mongoContext.Stock.Find(s => s.ProductId == product.Id).FirstOrDefaultAsync();
+                    
+                    if (stock == null )
+                    {
+                        continue;
+                    }
+                    var customer = await _mongoContext.Customers.Find(c => c.CustomerId.ToString() == order.CustomerId).FirstOrDefaultAsync();
+                    if (customer == null)
+                        continue;
+                    if (order != null && product != null)
+                    {
+                        response.Add(new
+                        {
+                            Id = orderItem.OrderItemId,
+                            InvoiceNo = order.InvoiceNo,
+                            CusEmail = customer?.Email,
+                            CusAddress = order.Address,
+                            OrderDate = order.OrderDate.Date.ToString("yyyy-MM-dd"),
+                            ProductName = product.Name,
+                            Quantity = orderItem.Quantity,
+                            StockAvailable = stock?.Quantity ?? 0,
+                            Status = orderItem.Status
+                        });
+                    }
+                }
+
+                return Ok(new
+                {
+                    status = "OK",
+                    data = response
+                });
+            }
+
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "NOK",
+                    message = "An error occurred while fetching order items"
+                });
+            }
+        }
+
+        [HttpPut("setOrderItemStatus/{orderItemId}/{status}")]
+        public async Task<IActionResult> SetOrderItemStatus(string orderItemId, string status)
+        {
+            using var session =  _mongoContext.StartSession();
+            session.StartTransaction();
+
+            try
+            {
+                // Update the status of the order item
+                var filter = Builders<OrderItems>.Filter.Eq(oi => oi.OrderItemId, orderItemId);
+                var update = Builders<OrderItems>.Update
+                    .Set(oi => oi.Status, status)
+                    .Set(oi => oi.UpdatedAt, DateTime.UtcNow);
+
+                var updateResult = await _mongoContext.OrderItems.UpdateOneAsync(filter, update);
+
+                if (updateResult.ModifiedCount == 0)
+                {
+                    await session.AbortTransactionAsync();
+                    return NotFound(new { status = "NOK", message = "Order item not found" });
+                }
+
+                // Get the order item to find the associated order
+                var orderItem = await _mongoContext.OrderItems.Find(filter).FirstOrDefaultAsync();
+                if (orderItem == null)
+                {
+                    await session.AbortTransactionAsync();
+                    return NotFound(new { status = "NOK", message = "Order item not found" });
+                }
+
+                // Check if all order items for the order are "Ready"
+                var orderItems = await _mongoContext.OrderItems.Find(oi => oi.OrderId == orderItem.OrderId).ToListAsync();
+                var allReady = orderItems.All(oi => oi.Status == "Ready");
+
+                // Update the order status based on the order items status
+                var orderStatus = allReady ? "Delivered" : "Partially Delivered";
+                var orderFilter = Builders<Orders>.Filter.Eq(o => o.OrderId, orderItem.OrderId);
+                var orderUpdate = Builders<Orders>.Update
+                    .Set(o => o.Status, orderStatus)
+                    .Set(o => o.UpdatedAt, DateTime.UtcNow);
+
+                await _mongoContext.Orders.UpdateOneAsync(orderFilter, orderUpdate);
+
+                // Update the stock if the order item is delivered
+           
+                  var productFilter = Builders<Stock>.Filter.Eq(s => s.ProductId, orderItem.ProductId);
+                  var productUpdate = Builders<Stock>.Update.Inc(s => s.Quantity, -orderItem.Quantity);
+                  await _mongoContext.Stock.UpdateOneAsync(productFilter, productUpdate);
+                
+
+                await session.CommitTransactionAsync();
+
+                return Ok(new { status = "OK", message = "Order item status updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                await session.AbortTransactionAsync();
+                return BadRequest(new { status = "NOK", message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("addDummyOrders")]
+        public async Task<ActionResult> AddDummyOrders()
+        {
+            try
+            {
+                var dummyOrders = new List<Orders>
+        {
+            new Orders
+            {
+                OrderId = ObjectId.GenerateNewId().ToString(),
+                InvoiceNo = 1001,
+                CustomerId = "670181d28c096894a6fbf5b5",
+                Status = "Processing",
+                OrderDate = DateTime.UtcNow,
+                Address = "123 Main St, New York, NY 10001",
+                IsPaid = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Orders
+            {
+                OrderId = ObjectId.GenerateNewId().ToString(),
+                InvoiceNo = 1002,
+                CustomerId = "6701826d8c096894a6fbf5b6",
+                Status = "Dispatched",
+                OrderDate = DateTime.UtcNow,
+                Address = "456 Elm St, New York, NY 10002",
+                IsPaid = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Orders
+            {
+                OrderId = ObjectId.GenerateNewId().ToString(),
+                InvoiceNo = 1003,
+                CustomerId = "67019d664866a73d2cad6813",
+                Status = "Delivered",
+                OrderDate = DateTime.UtcNow,
+                Address = "123 Main St, New York, NY 10003",
+                IsPaid = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Orders
+            {
+                OrderId = ObjectId.GenerateNewId().ToString(),
+                InvoiceNo = 1004,
+                CustomerId = "67021fabc55fc721fc3ee20e",
+                Status = "Cancelled",
+                OrderDate = DateTime.UtcNow,
+                Address = "456 Elm St, New York, NY 10004",
+                IsPaid = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            }
+        };
+
+                var dummyOrderItems = new List<OrderItems>
+        {
+            new OrderItems
+            {
+                OrderItemId = ObjectId.GenerateNewId().ToString(),
+                OrderId = dummyOrders[0].OrderId,
+                ProductId = "66fc3fc02c116c3d054f1c89",
+                VendorId = "66fc3606342696db9557e652",
+                Status =  "New",
+                Quantity = 2,
+                Price = 10.00m,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new OrderItems
+            {
+                OrderItemId = ObjectId.GenerateNewId().ToString(),
+                OrderId = dummyOrders[1].OrderId,
+                ProductId = "670015204e145f341a5a3abc",
+                VendorId = "66fc3613342696db9557e654",
+                Status =  "New",
+                Quantity = 1,
+                Price = 20.00m,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new OrderItems
+            {
+                OrderItemId = ObjectId.GenerateNewId().ToString(),
+                OrderId = dummyOrders[2].OrderId,
+                ProductId = "670015204e145f341a5a3abd",
+                VendorId = "670178ecdc5a517b902aeb85",
+                Status =  "Ready",
+                Quantity = 3,
+                Price = 15.00m,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new OrderItems
+            {
+                OrderItemId = ObjectId.GenerateNewId().ToString(),
+                OrderId = dummyOrders[3].OrderId,
+                ProductId = "670015214e145f341a5a3abe",
+                VendorId = "6701928dd7649408388be35d",
+                Status = "Cancelled",
+                Quantity = 5,
+                Price = 5.00m,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            }
+        };
+
+                await _mongoContext.Orders.InsertManyAsync(dummyOrders);
+                await _mongoContext.OrderItems.InsertManyAsync(dummyOrderItems);
+
+                return Ok("Dummy orders and order items added successfully.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "NOK",
+                    message = $"An error occurred while adding dummy orders and order items: {ex.Message}"
+                });
+            }
+        }
 
 
 

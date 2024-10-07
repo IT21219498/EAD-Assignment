@@ -61,6 +61,9 @@ const NavigationBar = () => {
                   <NavDropdown.Item href="/OrderManagement">
                     Orders
                   </NavDropdown.Item>
+                  <NavDropdown.Item href="/ConfirmOrder">
+                    Ready Orders
+                  </NavDropdown.Item>
                 </NavDropdown>
               </>
             )}
