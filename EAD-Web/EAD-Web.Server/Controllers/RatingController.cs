@@ -116,5 +116,29 @@ namespace EAD_Web.Server.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<VendorRating>>> GetAllReviews()
+        {
+            try
+            {
+                // Fetch all vendor ratings from the collection
+                var vendorRatings = await _mongoContext.VendorRatings.Find(_ => true).ToListAsync();
+
+                // Check if there are any ratings
+                if (vendorRatings.Count == 0)
+                {
+                    return NoContent();  // Return 204 No Content if there are no reviews
+                }
+
+                return Ok(vendorRatings);  // Return all ratings with 200 OK
+            }
+            catch (System.Exception ex)
+            {
+                // Log the error
+                _logger.LogError(ex, "Error in getting all reviews");
+                return BadRequest(ex.Message);  // Return 400 Bad Request for errors
+            }
+        }
     }
 }
