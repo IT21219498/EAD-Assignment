@@ -83,5 +83,38 @@ namespace EAD_Web.Server.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetReviewById(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest("Rating ID cannot be empty.");
+            }
+
+            try
+            {
+                // Parse the string ID to ObjectId
+                if (!ObjectId.TryParse(id, out var objectId))
+                {
+                    return BadRequest("Invalid Rating ID format.");
+                }
+
+                // Find the vendor rating by ID
+                var vendorRating = await _mongoContext.VendorRatings.Find(r => r.Id == objectId).FirstOrDefaultAsync();
+
+                if (vendorRating == null)
+                {
+                    return NotFound("Review not found.");
+                }
+
+                return Ok(vendorRating);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in getting review by ID");
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
