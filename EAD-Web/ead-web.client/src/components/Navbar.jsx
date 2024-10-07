@@ -1,39 +1,28 @@
-// src/components/Navbar.jsx
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from "react";
 import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import proptype from "prop-types";
 import logo from "../assets/EADlogo.png";
 import { FaRegUserCircle } from "react-icons/fa";
-import AuthContext from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-
+import AuthContext from "../contexts/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 
 const NavigationBar = () => {
   const navigate = useNavigate();
 
   const { user, setUser } = useContext(AuthContext);
 
-    // useEffect hook to redirect to login if user is not authenticated
+  // useEffect hook to redirect to login if user is not authenticated
   useEffect(() => {
-    !user && navigate('/login', { replace: true });
-    console.log("User after refresh",user);
-
+    !user && navigate("/login", { replace: true });
+    console.log("User after refresh", user);
   }, []);
 
   const handleLogout = () => {
-    console.log("User after logout",user);
-
     setUser(null);
-    // Clear the session storage
-    console.log("User after logout",user);
-
     sessionStorage.clear();
-    // Redirect to the login page
-    console.log("User after logout",user);
-    window.location.href = "/login";
+    sessionStorage.removeItem("token");
+    navigate("/login", { replace: true });
   };
-
-
 
   return (
     <Navbar bg="light" expand="lg">
@@ -88,7 +77,7 @@ const NavigationBar = () => {
               </>
             )}
 
-{user.role === "Admin" && (
+            {user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -96,7 +85,7 @@ const NavigationBar = () => {
                   id="user-management-dropdown"
                 >
                   <NavDropdown.Item href="/PendingUsers">
-                    Vendor Account  Management
+                    Vendor Account Management
                   </NavDropdown.Item>
                   <NavDropdown.Item href="/CustomerActivation">
                     Customer Account Management
@@ -132,16 +121,14 @@ const NavigationBar = () => {
                   title="Account Management"
                   id="csr-management-dropdown"
                 >
-                           <NavDropdown.Item href="/CustomerActivation">
+                  <NavDropdown.Item href="/CustomerActivation">
                     Customer Account Management
                   </NavDropdown.Item>
                   <NavDropdown.Item href="/ReActivateCustomer">
                     Account Re-Activation Management
-                  </NavDropdown.Item >
+                  </NavDropdown.Item>
                 </NavDropdown>
-              
               </>
-              
             )}
           </Nav>
           <Nav className="ms-auto">
@@ -159,6 +146,5 @@ const NavigationBar = () => {
     </Navbar>
   );
 };
-
 
 export default NavigationBar;

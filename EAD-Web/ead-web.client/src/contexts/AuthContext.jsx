@@ -9,15 +9,14 @@ export const AuthContextProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-    useEffect(() => {
-        if (!user) {
-            checkUserLoggedIn();
-        }
-    }, [ navigate]);
+  useEffect(() => {
+    if (!user) {
+      checkUserLoggedIn();
+    }
+  }, [navigate]);
 
   const checkUserLoggedIn = async () => {
     try {
-      console.log("Check user session storage ", sessionStorage);
       const token = sessionStorage.getItem("token"); // Retrieve the token
 
       const response = await fetch("/api/User/chk", {
@@ -27,65 +26,43 @@ export const AuthContextProvider = ({ children }) => {
         },
       });
 
-        if (response.ok) {
-            const userData = await response.json();
-            console.log('User Data:', userData);
-            const { userId, role } = userData;
-
-            // setUser({userId,role});
-        //     if (
-        //         location.pathname === '/login' ||
-        //         location.pathname === '/register'
-        //       ) {
-        //         setTimeout(() => {
-        //           navigate('/', { replace: true });
-        //         }, 500);
-        //       } else {
-        //         navigate(location.pathname ? location.pathname : '/');
-        //   }
-         }
-
-        else {
-            setUser(null);
-            sessionStorage.clear();
-            navigate('/login', { replace: true });
-        }
-
-    }  catch(err){
+      if (response.ok) {
+        const userData = await response.json();
+        console.log("User Data:", userData);
+        const { userId, role } = userData;
+        setUser({ userId, role });
+      } else {
         setUser(null);
         sessionStorage.clear();
-        console.log(err);
-        navigate('/login', { replace: true });
+        navigate("/login", { replace: true });
+      }
+    } catch (err) {
+      setUser(null);
+      sessionStorage.clear();
+      console.log(err);
+      navigate("/login", { replace: true });
     }
   };
 
-    //Login Request
-     const loginUser = async (loginModel) => {
-        try {
-            const response = await fetch('/api/User/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(loginModel),
-            });
-    
-            if (response.ok) {
-                const result = await response.json();
-                console.log("Login successful:", result);
-                const { token, userId, role } = result;
-    
-                sessionStorage.setItem('token', token);
-                // sessionStorage.setItem('userId', userId);
-                // sessionStorage.setItem('role', role);
+  //Login Request
+  const loginUser = async (loginModel) => {
+    try {
+      const response = await fetch("/api/User/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginModel),
+      });
 
-                setUser({userId,role});
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Login successful:", result);
+        const { token, userId, role } = result;
 
         sessionStorage.setItem("token", token);
-        sessionStorage.setItem("userId", userId);
-        sessionStorage.setItem("role", role);
 
-        setUser(role);
+        setUser({ userId, role });
 
         return response;
       } else {
