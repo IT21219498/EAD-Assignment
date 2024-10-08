@@ -48,6 +48,7 @@ namespace EAD_Web.Server.Controllers
                                 id = product.Id,
                                 price = product.Price
                                 },
+                                
                                 quantity = orderItem.Quantity,
                                 price = orderItem.Price,
                                 orderItemId = orderItem.OrderItemId
@@ -66,6 +67,7 @@ namespace EAD_Web.Server.Controllers
                             name = user?.FullName
                         },
                         status = order.Status,
+                        address = order.Address,
                         orderItems = orderItemResponse,
                         orderDate = order.OrderDate.Date.ToString("yyyy-MM-dd"),
                     });
@@ -210,7 +212,8 @@ namespace EAD_Web.Server.Controllers
                     Status = orderRequest.Status,
                     OrderDate = orderRequest.OrderDate,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
+                    Address = orderRequest.Address
                 };
 
                 // Insert the new order into the Orders collection
@@ -296,6 +299,7 @@ namespace EAD_Web.Server.Controllers
                 .Set(o => o.CustomerId, orderRequest.Customer.Id)
                 .Set(o => o.Status, orderRequest.Status)
                 .Set(o => o.OrderDate, orderRequest.OrderDate)
+                .Set(o => o.Address, orderRequest.Address)
                 .Set(o => o.UpdatedAt, DateTime.UtcNow);
 
             var result = await _mongoContext.Orders.UpdateOneAsync(filter, update);
@@ -419,7 +423,7 @@ namespace EAD_Web.Server.Controllers
         [HttpPut("setOrderItemStatus/{orderItemId}/{status}")]
         public async Task<IActionResult> SetOrderItemStatus(string orderItemId, string status)
         {
-            using var session =  _mongoContext.StartSession();
+            using var session = _mongoContext.StartSession();
             session.StartTransaction();
 
             try
@@ -460,11 +464,11 @@ namespace EAD_Web.Server.Controllers
                 await _mongoContext.Orders.UpdateOneAsync(orderFilter, orderUpdate);
 
                 // Update the stock if the order item is delivered
-           
-                  var productFilter = Builders<Stock>.Filter.Eq(s => s.ProductId, orderItem.ProductId);
-                  var productUpdate = Builders<Stock>.Update.Inc(s => s.Quantity, -orderItem.Quantity);
-                  await _mongoContext.Stock.UpdateOneAsync(productFilter, productUpdate);
-                
+
+                var productFilter = Builders<Stock>.Filter.Eq(s => s.ProductId, orderItem.ProductId);
+                var productUpdate = Builders<Stock>.Update.Inc(s => s.Quantity, -orderItem.Quantity);
+                await _mongoContext.Stock.UpdateOneAsync(productFilter, productUpdate);
+
 
                 await session.CommitTransactionAsync();
 
@@ -477,129 +481,305 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
-        [HttpPost("addDummyOrders")]
-        public async Task<ActionResult> AddDummyOrders()
+        //Get all order cancel requests
+
+        [HttpGet("orderCancelRequests")]
+        public async Task<ActionResult> GetAllOrderCancelRequests()
         {
             try
             {
-                var dummyOrders = new List<Orders>
-        {
-            new Orders
-            {
-                OrderId = ObjectId.GenerateNewId().ToString(),
-                InvoiceNo = 1001,
-                CustomerId = "670181d28c096894a6fbf5b5",
-                Status = "Processing",
-                OrderDate = DateTime.UtcNow,
-                Address = "123 Main St, New York, NY 10001",
-                IsPaid = false,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new Orders
-            {
-                OrderId = ObjectId.GenerateNewId().ToString(),
-                InvoiceNo = 1002,
-                CustomerId = "6701826d8c096894a6fbf5b6",
-                Status = "Dispatched",
-                OrderDate = DateTime.UtcNow,
-                Address = "456 Elm St, New York, NY 10002",
-                IsPaid = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new Orders
-            {
-                OrderId = ObjectId.GenerateNewId().ToString(),
-                InvoiceNo = 1003,
-                CustomerId = "67019d664866a73d2cad6813",
-                Status = "Delivered",
-                OrderDate = DateTime.UtcNow,
-                Address = "123 Main St, New York, NY 10003",
-                IsPaid = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new Orders
-            {
-                OrderId = ObjectId.GenerateNewId().ToString(),
-                InvoiceNo = 1004,
-                CustomerId = "67021fabc55fc721fc3ee20e",
-                Status = "Cancelled",
-                OrderDate = DateTime.UtcNow,
-                Address = "456 Elm St, New York, NY 10004",
-                IsPaid = false,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            }
-        };
+                var orderCancelRequests = await _mongoContext.OrderCancelsRequests.Find((o) => o.IsClosed == false).ToListAsync();
+                var orderCancelRequestsResponse = new List<object>();
 
-                var dummyOrderItems = new List<OrderItems>
-        {
-            new OrderItems
-            {
-                OrderItemId = ObjectId.GenerateNewId().ToString(),
-                OrderId = dummyOrders[0].OrderId,
-                ProductId = "66fc3fc02c116c3d054f1c89",
-                VendorId = "66fc3606342696db9557e652",
-                Status =  "New",
-                Quantity = 2,
-                Price = 10.00m,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new OrderItems
-            {
-                OrderItemId = ObjectId.GenerateNewId().ToString(),
-                OrderId = dummyOrders[1].OrderId,
-                ProductId = "670015204e145f341a5a3abc",
-                VendorId = "66fc3613342696db9557e654",
-                Status =  "New",
-                Quantity = 1,
-                Price = 20.00m,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new OrderItems
-            {
-                OrderItemId = ObjectId.GenerateNewId().ToString(),
-                OrderId = dummyOrders[2].OrderId,
-                ProductId = "670015204e145f341a5a3abd",
-                VendorId = "670178ecdc5a517b902aeb85",
-                Status =  "Ready",
-                Quantity = 3,
-                Price = 15.00m,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new OrderItems
-            {
-                OrderItemId = ObjectId.GenerateNewId().ToString(),
-                OrderId = dummyOrders[3].OrderId,
-                ProductId = "670015214e145f341a5a3abe",
-                VendorId = "6701928dd7649408388be35d",
-                Status = "Cancelled",
-                Quantity = 5,
-                Price = 5.00m,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            }
-        };
+                foreach (var orderCancelRequest in orderCancelRequests)
+                {
+                    var order = await _mongoContext.Orders.Find(o => o.OrderId == orderCancelRequest.OrderId).FirstOrDefaultAsync();
+                    if (order == null || order.Status != "Processing")
+                    {
+                        continue;
+                    }
 
-                await _mongoContext.Orders.InsertManyAsync(dummyOrders);
-                await _mongoContext.OrderItems.InsertManyAsync(dummyOrderItems);
+                    var customer = await _mongoContext.Customers.Find(c => c.CustomerId.ToString() == order.CustomerId).FirstOrDefaultAsync();
+                    if (customer == null)
+                    {
+                      
+                        continue;
+                    }
 
-                return Ok("Dummy orders and order items added successfully.");
+                    orderCancelRequestsResponse.Add(new
+                    {
+                        id = orderCancelRequest.Id,
+                        orderId = order.OrderId,
+                        invoiceNo = order.InvoiceNo,
+                        cusEmail = customer.Email,
+                        cusName = customer.FullName,
+                        comment = orderCancelRequest.Comment,
+                        createdAt = orderCancelRequest.CreatedAt.Date.ToString("yyyy-MM-dd"),
+                    });
+                }
+
+                return Ok(new
+                {
+                    status = "OK",
+                    data = orderCancelRequestsResponse
+                });
             }
             catch (Exception ex)
             {
                 return BadRequest(new
                 {
                     status = "NOK",
-                    message = $"An error occurred while adding dummy orders and order items: {ex.Message}"
+                    message = $"An error occurred while fetching order cancel requests: {ex.Message}"
                 });
             }
         }
+
+        [HttpPut("updateCancelRequests/{requestId}")]
+        public async Task<ActionResult> UpdateCancelRequests(string requestId, [FromBody] bool isApproved)
+        {
+            using var session = _mongoContext.StartSession();
+            session.StartTransaction();
+        
+            try
+            {
+                // Find the cancel request by requestId
+                var cancelRequest = await _mongoContext.OrderCancelsRequests
+                    .Find(cr => cr.Id == requestId)
+                    .FirstOrDefaultAsync();
+        
+                if (cancelRequest == null)
+                {
+                    await session.AbortTransactionAsync();
+                    return NotFound(new { status = "NOK", message = "Cancel request not found" });
+                }
+        
+                // Update the cancel request status to isClosed: true
+                var cancelRequestFilter = Builders<OrderCancelsRequests>.Filter.Eq(cr => cr.Id, requestId);
+                var cancelRequestUpdate = Builders<OrderCancelsRequests>.Update
+                    .Set(cr => cr.IsClosed, true)
+                    .Set(cr => cr.UpdatedAt, DateTime.UtcNow);
+        
+                var cancelRequestResult = await _mongoContext.OrderCancelsRequests.UpdateOneAsync(cancelRequestFilter, cancelRequestUpdate);
+        
+                if (cancelRequestResult.ModifiedCount == 0)
+                {
+                    await session.AbortTransactionAsync();
+                    return NotFound(new { status = "NOK", message = "Cancel request not found or no changes detected" });
+                }
+        
+                // If isApproved is true, update the order status to Cancelled
+                if (isApproved)
+                {
+                    var orderFilter = Builders<Orders>.Filter.Eq(o => o.OrderId, cancelRequest.OrderId);
+                    var orderUpdate = Builders<Orders>.Update
+                        .Set(o => o.Status, "Cancelled")
+                        .Set(o => o.UpdatedAt, DateTime.UtcNow);
+        
+                    var orderResult = await _mongoContext.Orders.UpdateOneAsync(orderFilter, orderUpdate);
+        
+                    if (orderResult.ModifiedCount == 0)
+                    {
+                        await session.AbortTransactionAsync();
+                        return NotFound(new { status = "NOK", message = "Order not found or no changes detected" });
+                    }
+                }
+        
+                await session.CommitTransactionAsync();
+        
+                return Ok(new { status = "OK", message = "Cancel request updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                await session.AbortTransactionAsync();
+                return BadRequest(new { status = "NOK", message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+        // [HttpPost("addDummyOrders")]
+        // public async Task<ActionResult> AddDummyOrders()
+        // {
+        //     try
+        //     {
+        //         var dummyOrders = new List<Orders>
+        // {
+        //     new Orders
+        //     {
+        //         OrderId = ObjectId.GenerateNewId().ToString(),
+        //         InvoiceNo = 1001,
+        //         CustomerId = "670181d28c096894a6fbf5b5",
+        //         Status = "Processing",
+        //         OrderDate = DateTime.UtcNow,
+        //         Address = "123 Main St, New York, NY 10001",
+        //         IsPaid = false,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new Orders
+        //     {
+        //         OrderId = ObjectId.GenerateNewId().ToString(),
+        //         InvoiceNo = 1002,
+        //         CustomerId = "6701826d8c096894a6fbf5b6",
+        //         Status = "Dispatched",
+        //         OrderDate = DateTime.UtcNow,
+        //         Address = "456 Elm St, New York, NY 10002",
+        //         IsPaid = true,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new Orders
+        //     {
+        //         OrderId = ObjectId.GenerateNewId().ToString(),
+        //         InvoiceNo = 1003,
+        //         CustomerId = "67019d664866a73d2cad6813",
+        //         Status = "Delivered",
+        //         OrderDate = DateTime.UtcNow,
+        //         Address = "123 Main St, New York, NY 10003",
+        //         IsPaid = true,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new Orders
+        //     {
+        //         OrderId = ObjectId.GenerateNewId().ToString(),
+        //         InvoiceNo = 1004,
+        //         CustomerId = "67021fabc55fc721fc3ee20e",
+        //         Status = "Cancelled",
+        //         OrderDate = DateTime.UtcNow,
+        //         Address = "456 Elm St, New York, NY 10004",
+        //         IsPaid = false,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     }
+        // };
+
+        //         var dummyOrderItems = new List<OrderItems>
+        // {
+        //     new OrderItems
+        //     {
+        //         OrderItemId = ObjectId.GenerateNewId().ToString(),
+        //         OrderId = dummyOrders[0].OrderId,
+        //         ProductId = "66fc3fc02c116c3d054f1c89",
+        //         VendorId = "66fc3606342696db9557e652",
+        //         Status =  "New",
+        //         Quantity = 2,
+        //         Price = 10.00m,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new OrderItems
+        //     {
+        //         OrderItemId = ObjectId.GenerateNewId().ToString(),
+        //         OrderId = dummyOrders[1].OrderId,
+        //         ProductId = "670015204e145f341a5a3abc",
+        //         VendorId = "66fc3613342696db9557e654",
+        //         Status =  "New",
+        //         Quantity = 1,
+        //         Price = 20.00m,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new OrderItems
+        //     {
+        //         OrderItemId = ObjectId.GenerateNewId().ToString(),
+        //         OrderId = dummyOrders[2].OrderId,
+        //         ProductId = "670015204e145f341a5a3abd",
+        //         VendorId = "670178ecdc5a517b902aeb85",
+        //         Status =  "Ready",
+        //         Quantity = 3,
+        //         Price = 15.00m,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new OrderItems
+        //     {
+        //         OrderItemId = ObjectId.GenerateNewId().ToString(),
+        //         OrderId = dummyOrders[3].OrderId,
+        //         ProductId = "670015214e145f341a5a3abe",
+        //         VendorId = "6701928dd7649408388be35d",
+        //         Status = "Cancelled",
+        //         Quantity = 5,
+        //         Price = 5.00m,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     }
+        // };
+
+        //         await _mongoContext.Orders.InsertManyAsync(dummyOrders);
+        //         await _mongoContext.OrderItems.InsertManyAsync(dummyOrderItems);
+
+        //         return Ok("Dummy orders and order items added successfully.");
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return BadRequest(new
+        //         {
+        //             status = "NOK",
+        //             message = $"An error occurred while adding dummy orders and order items: {ex.Message}"
+        //         });
+        //     }
+        // }
+        // namespace EAD_Web.Server.Models
+        // {
+        //     public class OrderCancelsRequests
+        //     {
+        //         [BsonId]
+        //         [BsonRepresentation(BsonType.ObjectId)]
+        //         public string OrderId { get; set; }  // Unique identifier for the order
+
+        //         [BsonElement("comment")]
+        //         public string Comment { get; set; }  // Comment for the order cancellation]
+
+        //         [BsonElement("createdAt")]
+        //         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        //         public DateTime CreatedAt { get; set; }  // Date the order was created
+
+        //         [BsonElement("updatedAt")]
+        //         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        //         public DateTime UpdatedAt { get; set; }  // Date the order was last updated
+        //     }
+        // }
+        [HttpPost("dummyCancelRequests")]
+        public async Task<ActionResult> AddDummyCancelRequests()
+        {
+            try
+            {
+                var dummyCancelRequests = new List<OrderCancelsRequests>
+        {
+            new OrderCancelsRequests
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                OrderId = "6704414ef279714bc49bdc9f",
+                Comment = "Customer changed their mind",
+                IsClosed = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new OrderCancelsRequests
+            {
+                 Id = ObjectId.GenerateNewId().ToString(),
+                OrderId = "670447d6366fea5faa3b7767",
+                Comment = "Customer found a better deal",
+                IsClosed = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+         
+        };
+
+                await _mongoContext.OrderCancelsRequests.InsertManyAsync(dummyCancelRequests);
+
+                return Ok("Dummy order cancel requests added successfully.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "NOK",
+                    message = $"An error occurred while adding dummy order cancel requests: {ex.Message}"
+                });
+            }
+        }
+
 
 
 

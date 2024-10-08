@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import { useContext, useEffect, useState } from "react";
 import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import proptype from "prop-types";
@@ -19,16 +18,10 @@ const NavigationBar = () => {
   }, []);
 
   const handleLogout = () => {
-    console.log("User after logout", user);
-
     setUser(null);
-    // Clear the session storage
-    console.log("User after logout", user);
-
     sessionStorage.clear();
-    // Redirect to the login page
-    console.log("User after logout", user);
-    window.location.href = "/login";
+    sessionStorage.removeItem("token");
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -47,7 +40,7 @@ const NavigationBar = () => {
           <Nav className="me-auto">
             {/* Common Links */}
             <Nav.Link href="/">Home</Nav.Link>
-            {user.role === "Admin" && (
+            {user && user?.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -60,11 +53,14 @@ const NavigationBar = () => {
                   <NavDropdown.Item href="/ConfirmOrder">
                     Ready Orders
                   </NavDropdown.Item>
+                  <NavDropdown.Item href="/CancelRequests">
+                    Cancel Requests
+                  </NavDropdown.Item>
                 </NavDropdown>
               </>
             )}
 
-            {user.role === "Admin" && (
+            {user && user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -84,7 +80,7 @@ const NavigationBar = () => {
               </>
             )}
 
-            {user.role === "Admin" && (
+            {user && user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -101,7 +97,7 @@ const NavigationBar = () => {
               </>
             )}
 
-            {user.role === "Vendor" && (
+            {user && user.role === "Vendor" && (
               <>
                 {/* Vendor-Specific Links */}
                 <NavDropdown
@@ -118,7 +114,7 @@ const NavigationBar = () => {
               </>
             )}
 
-            {user.role === "CSR" && (
+            {user && user.role === "CSR" && (
               <>
                 {/* CSR-Specific Links */}
                 <Nav.Link href="#customer-orders">

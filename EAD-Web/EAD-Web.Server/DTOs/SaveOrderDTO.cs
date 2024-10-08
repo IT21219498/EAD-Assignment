@@ -6,6 +6,8 @@
         public CustomerRequest Customer { get; set; }
         public DateTime OrderDate { get; set; }
         public string Status { get; set; }
+
+        public string Address { get; set; }
         public List<OrderItemRequest> OrderItems { get; set; }
     }
 

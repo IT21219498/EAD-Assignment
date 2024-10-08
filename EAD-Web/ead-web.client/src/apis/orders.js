@@ -206,3 +206,53 @@ export const setOrderItemStatus = async (orderItemId, status) => {
     throw error;
   }
 };
+
+export const setCancelRequestStatus = async (requestId, isApproved) => {
+  try {
+    const response = await fetch(
+      `api/Order/updateCancelRequests/${requestId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(isApproved),
+      }
+    );
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new TypeError("Oops, we haven't got JSON!");
+    }
+
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+};
+
+export const fetchCancelRequests = async () => {
+  try {
+    const response = await fetch(`api/Order/orderCancelRequests`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new TypeError("Oops, we haven't got JSON!");
+    }
+
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+};

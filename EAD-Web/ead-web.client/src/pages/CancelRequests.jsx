@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { Form, Pagination, Spinner, Table } from "react-bootstrap";
+import { Button, Pagination, Spinner, Table } from "react-bootstrap";
 import Toast from "../components/Toast";
 import ConfirmAction from "../components/ConfirmAction";
-import { fetchVenderOrder, setOrderItemStatus } from "../apis/orders";
+import { fetchCancelRequests, setCancelRequestStatus } from "../apis/orders";
 
-const OrderItemReady = () => {
-  const [selectedOrderItemId, setSelectedOrderItemId] = useState(null);
-  const [orders, setOrders] = useState([]);
+const CancelRequests = () => {
   const [showSpinner, setShowSpinner] = useState(false);
+  const [requestes, setRequestes] = useState([]);
+  const [isApprove, setIsApprove] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
   const [showToast, setShowToast] = useState(false);
   const [toastVariant, setToastVariant] = useState("");
   const [toastMessage, setToastMessage] = useState("");
@@ -16,8 +17,8 @@ const OrderItemReady = () => {
   const itemsPerPage = 5; // Number of products to show per page
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentOrders = orders.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const currentRequests = requestes.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(requestes.length / itemsPerPage);
   const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
   const handleToastShow = (message, variant) => {
@@ -31,53 +32,37 @@ const OrderItemReady = () => {
     setToastVariant(null);
     setToastMessage(null);
   };
-  const handleShowConfirm = (id) => {
-    setSelectedOrderItemId(id);
-    setShowConfirm(true);
-  };
-  const handleConfirmAction = async () => {
-    setShowConfirm(false); // Hide confirmation dialo
-    setShowSpinner(true); // Show spinner before starting the action
+  const loadRequests = useCallback(async () => {
     try {
-      await updateOrderStatus(selectedOrderItemId, "Ready");
-    } catch (error) {
-      console.error("Error during action:", error);
-    } finally {
-      setShowSpinner(false); // Hide spinner after the action is complete
-    }
-  };
-
-  const loadOrders = useCallback(async () => {
-    try {
-      const data = await fetchVenderOrder("66fc3606342696db9557e652");
+      const data = await fetchCancelRequests();
       if (data.status === "NOK") {
         handleToastShow(data.message, "danger");
-        setOrders([]);
+        setRequestes([]);
         return;
       }
       if (data.data.length === 0) {
-        handleToastShow("No order items found", "warning", "Warning");
-        setOrders([]);
+        handleToastShow("No cancel requests found", "warning", "Warning");
+        setRequestes([]);
         return;
       }
-      setOrders(data.data);
+      setRequestes(data.data);
     } catch (err) {
-      setOrders([]);
+      setRequestes([]);
       console.error(err.message);
-      handleToastShow("Error order items outlets", "danger");
+      handleToastShow("Error loading cancel requests", "danger");
     }
   }, []);
 
-  const updateOrderStatus = async (orderId, status) => {
+  const updateRequestStatus = async (requestId, isApproved) => {
     try {
-      const data = await setOrderItemStatus(orderId, status);
+      const data = await setCancelRequestStatus(requestId, isApproved);
 
       if (data.status === "NOK") {
         handleToastShow(data.message, "danger");
         return;
       }
       handleToastShow(data.message, "success");
-      loadOrders();
+      loadRequests();
     } catch (err) {
       console.error(err.message);
       handleToastShow("Error updating order status", "danger");
@@ -87,12 +72,28 @@ const OrderItemReady = () => {
   useEffect(() => {
     const fetchData = async () => {
       setShowSpinner(true);
-      loadOrders();
+      loadRequests();
       setShowSpinner(false);
     };
     fetchData();
-  }, [loadOrders]);
+  }, [loadRequests]);
 
+  const handleShowConfirm = (type, id) => {
+    setIsApprove(type === "approve");
+    setSelectedRequestId(id);
+    setShowConfirm(true);
+  };
+  const handleConfirmAction = async () => {
+    setShowSpinner(true); // Show spinner before starting the action
+    try {
+      setShowConfirm(false); // Hide confirmation dialog
+      await updateRequestStatus(selectedRequestId, isApprove);
+    } catch (error) {
+      console.error("Error during action:", error);
+    } finally {
+      setShowSpinner(false); // Hide spinner after the action is complete
+    }
+  };
   return (
     <>
       {showToast && (
@@ -109,8 +110,8 @@ const OrderItemReady = () => {
         onHide={() => setShowConfirm(false)}
         onConfirm={handleConfirmAction}
         title="Are you sure?"
-        message={"This will set order to as ready."}
-        confirmLabel={"Yes, Ready"}
+        message={isApprove ? "Approve this request?" : "Reject this request?"}
+        confirmLabel={isApprove ? "Approve" : "Reject"}
         confirmVariant={"primary"}
       />
 
@@ -122,12 +123,10 @@ const OrderItemReady = () => {
             <tr>
               <th>Invoice No</th>
               <th>Customer Email</th>
-              <th>Customer Address</th>
-              <th>Order Date</th>
-              <th>Product Name</th>
-              <th>Quantity</th>
-              <th>Stock Available</th>
-              <th>Status</th>
+              <th>Customer Name</th>
+              <th>Comment</th>
+              <th>Request Date</th>
+              <th>Action</th>
             </tr>
           </thead>
 
@@ -142,48 +141,36 @@ const OrderItemReady = () => {
                 </td>
               </tr>
             )}
-            {!showSpinner && currentOrders && currentOrders.length !== 0 && (
-              <>
-                {currentOrders.map((order) => (
-                  <tr key={order.id}>
-                    <td>{order.invoiceNo}</td>
-                    <td>{order.cusEmail}</td>
-                    <td>{order.cusAddress}</td>
-                    <td>{order.orderDate}</td>
-                    <td>{order.productName}</td>
-                    <td>{order.quantity}</td>
-                    <td
-                      style={{
-                        backgroundColor:
-                          order.stockAvailable < order.quantity
-                            ? "red"
-                            : "inherit",
-                      }}
-                    >
-                      {order.stockAvailable}
-                    </td>
-                    <td>
-                      <Form.Select
-                        name="customer"
-                        value={order.status}
-                        onChange={() => {
-                          handleShowConfirm(order.id);
-                        }}
-                      >
-                        <option value="">Select Status</option>
-                        {order.stockAvailable >= order.quantity ? (
-                          <>
-                            <option value="Paid">Paid</option>
-                            <option value="Ready">Ready</option>
-                          </>
-                        ) : null}
-                        <option value="Cancelled">Cancelled</option>
-                      </Form.Select>
-                    </td>
-                  </tr>
-                ))}
-              </>
-            )}
+            {!showSpinner &&
+              currentRequests &&
+              currentRequests.length !== 0 && (
+                <>
+                  {currentRequests.map((order) => (
+                    <tr key={order.id}>
+                      <td>{order.invoiceNo}</td>
+                      <td>{order.cusEmail}</td>
+                      <td>{order.cusName}</td>
+                      <td>{order.comment}</td>
+                      <td>{order.createdAt}</td>
+                      <td>
+                        <Button
+                          variant={"success"}
+                          onClick={() => handleShowConfirm("approve", order.id)}
+                          className="me-2"
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          variant={"danger"}
+                          onClick={() => handleShowConfirm("reject", order.id)}
+                        >
+                          Reject
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              )}
           </tbody>
         </Table>
         <Pagination className="justify-content-center">
@@ -220,4 +207,4 @@ const OrderItemReady = () => {
   );
 };
 
-export default OrderItemReady;
+export default CancelRequests;
