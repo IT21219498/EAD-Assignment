@@ -423,7 +423,7 @@ namespace EAD_Web.Server.Controllers
         [HttpPut("setOrderItemStatus/{orderItemId}/{status}")]
         public async Task<IActionResult> SetOrderItemStatus(string orderItemId, string status)
         {
-            using var session =  _mongoContext.StartSession();
+            using var session = _mongoContext.StartSession();
             session.StartTransaction();
 
             try
@@ -464,15 +464,129 @@ namespace EAD_Web.Server.Controllers
                 await _mongoContext.Orders.UpdateOneAsync(orderFilter, orderUpdate);
 
                 // Update the stock if the order item is delivered
-           
-                  var productFilter = Builders<Stock>.Filter.Eq(s => s.ProductId, orderItem.ProductId);
-                  var productUpdate = Builders<Stock>.Update.Inc(s => s.Quantity, -orderItem.Quantity);
-                  await _mongoContext.Stock.UpdateOneAsync(productFilter, productUpdate);
-                
+
+                var productFilter = Builders<Stock>.Filter.Eq(s => s.ProductId, orderItem.ProductId);
+                var productUpdate = Builders<Stock>.Update.Inc(s => s.Quantity, -orderItem.Quantity);
+                await _mongoContext.Stock.UpdateOneAsync(productFilter, productUpdate);
+
 
                 await session.CommitTransactionAsync();
 
                 return Ok(new { status = "OK", message = "Order item status updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                await session.AbortTransactionAsync();
+                return BadRequest(new { status = "NOK", message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+        //Get all order cancel requests
+
+        [HttpGet("orderCancelRequests")]
+        public async Task<ActionResult> GetAllOrderCancelRequests()
+        {
+            try
+            {
+                var orderCancelRequests = await _mongoContext.OrderCancelsRequests.Find((o) => o.IsClosed == false).ToListAsync();
+                var orderCancelRequestsResponse = new List<object>();
+
+                foreach (var orderCancelRequest in orderCancelRequests)
+                {
+                    var order = await _mongoContext.Orders.Find(o => o.OrderId == orderCancelRequest.OrderId).FirstOrDefaultAsync();
+                    if (order == null || order.Status != "Processing")
+                    {
+                        continue;
+                    }
+
+                    var customer = await _mongoContext.Customers.Find(c => c.CustomerId.ToString() == order.CustomerId).FirstOrDefaultAsync();
+                    if (customer == null)
+                    {
+                      
+                        continue;
+                    }
+
+                    orderCancelRequestsResponse.Add(new
+                    {
+                        id = orderCancelRequest.Id,
+                        orderId = order.OrderId,
+                        invoiceNo = order.InvoiceNo,
+                        cusEmail = customer.Email,
+                        cusName = customer.FullName,
+                        comment = orderCancelRequest.Comment,
+                        createdAt = orderCancelRequest.CreatedAt.Date.ToString("yyyy-MM-dd"),
+                    });
+                }
+
+                return Ok(new
+                {
+                    status = "OK",
+                    data = orderCancelRequestsResponse
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "NOK",
+                    message = $"An error occurred while fetching order cancel requests: {ex.Message}"
+                });
+            }
+        }
+
+        [HttpPut("updateCancelRequests/{requestId}")]
+        public async Task<ActionResult> UpdateCancelRequests(string requestId, [FromBody] bool isApproved)
+        {
+            using var session = _mongoContext.StartSession();
+            session.StartTransaction();
+        
+            try
+            {
+                // Find the cancel request by requestId
+                var cancelRequest = await _mongoContext.OrderCancelsRequests
+                    .Find(cr => cr.Id == requestId)
+                    .FirstOrDefaultAsync();
+        
+                if (cancelRequest == null)
+                {
+                    await session.AbortTransactionAsync();
+                    return NotFound(new { status = "NOK", message = "Cancel request not found" });
+                }
+        
+                // Update the cancel request status to isClosed: true
+                var cancelRequestFilter = Builders<OrderCancelsRequests>.Filter.Eq(cr => cr.Id, requestId);
+                var cancelRequestUpdate = Builders<OrderCancelsRequests>.Update
+                    .Set(cr => cr.IsClosed, true)
+                    .Set(cr => cr.UpdatedAt, DateTime.UtcNow);
+        
+                var cancelRequestResult = await _mongoContext.OrderCancelsRequests.UpdateOneAsync(cancelRequestFilter, cancelRequestUpdate);
+        
+                if (cancelRequestResult.ModifiedCount == 0)
+                {
+                    await session.AbortTransactionAsync();
+                    return NotFound(new { status = "NOK", message = "Cancel request not found or no changes detected" });
+                }
+        
+                // If isApproved is true, update the order status to Cancelled
+                if (isApproved)
+                {
+                    var orderFilter = Builders<Orders>.Filter.Eq(o => o.OrderId, cancelRequest.OrderId);
+                    var orderUpdate = Builders<Orders>.Update
+                        .Set(o => o.Status, "Cancelled")
+                        .Set(o => o.UpdatedAt, DateTime.UtcNow);
+        
+                    var orderResult = await _mongoContext.Orders.UpdateOneAsync(orderFilter, orderUpdate);
+        
+                    if (orderResult.ModifiedCount == 0)
+                    {
+                        await session.AbortTransactionAsync();
+                        return NotFound(new { status = "NOK", message = "Order not found or no changes detected" });
+                    }
+                }
+        
+                await session.CommitTransactionAsync();
+        
+                return Ok(new { status = "OK", message = "Cancel request updated successfully" });
             }
             catch (Exception ex)
             {
@@ -604,26 +718,26 @@ namespace EAD_Web.Server.Controllers
         //         });
         //     }
         // }
-// namespace EAD_Web.Server.Models
-// {
-//     public class OrderCancelsRequests
-//     {
-//         [BsonId]
-//         [BsonRepresentation(BsonType.ObjectId)]
-//         public string OrderId { get; set; }  // Unique identifier for the order
+        // namespace EAD_Web.Server.Models
+        // {
+        //     public class OrderCancelsRequests
+        //     {
+        //         [BsonId]
+        //         [BsonRepresentation(BsonType.ObjectId)]
+        //         public string OrderId { get; set; }  // Unique identifier for the order
 
-//         [BsonElement("comment")]
-//         public string Comment { get; set; }  // Comment for the order cancellation]
+        //         [BsonElement("comment")]
+        //         public string Comment { get; set; }  // Comment for the order cancellation]
 
-//         [BsonElement("createdAt")]
-//         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
-//         public DateTime CreatedAt { get; set; }  // Date the order was created
+        //         [BsonElement("createdAt")]
+        //         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        //         public DateTime CreatedAt { get; set; }  // Date the order was created
 
-//         [BsonElement("updatedAt")]
-//         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
-//         public DateTime UpdatedAt { get; set; }  // Date the order was last updated
-//     }
-// }
+        //         [BsonElement("updatedAt")]
+        //         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        //         public DateTime UpdatedAt { get; set; }  // Date the order was last updated
+        //     }
+        // }
         [HttpPost("dummyCancelRequests")]
         public async Task<ActionResult> AddDummyCancelRequests()
         {
@@ -633,25 +747,23 @@ namespace EAD_Web.Server.Controllers
         {
             new OrderCancelsRequests
             {
-                OrderId = "60f1b9b3b3b3b3b3b3b3b3b3",
+                Id = ObjectId.GenerateNewId().ToString(),
+                OrderId = "6704414ef279714bc49bdc9f",
                 Comment = "Customer changed their mind",
+                IsClosed = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
             new OrderCancelsRequests
             {
-                OrderId = "60f1b9b3b3b3b3b3b3b3b3b",
+                 Id = ObjectId.GenerateNewId().ToString(),
+                OrderId = "670447d6366fea5faa3b7767",
                 Comment = "Customer found a better deal",
+                IsClosed = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            new OrderCancelsRequests
-            {
-                OrderId = "60f1b9b3b3b3b3b3b3b3b3c",
-                Comment = "Customer no longer needs the product",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            }
+         
         };
 
                 await _mongoContext.OrderCancelsRequests.InsertManyAsync(dummyCancelRequests);

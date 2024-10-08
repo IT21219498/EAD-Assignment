@@ -1,19 +1,11 @@
-import React, { useCallback, useEffect, useState } from "react";
-import {
-  Form,
-  OverlayTrigger,
-  Pagination,
-  Spinner,
-  Table,
-} from "react-bootstrap";
+import { useCallback, useEffect, useState } from "react";
+import { Form, Pagination, Spinner, Table } from "react-bootstrap";
 import Toast from "../components/Toast";
 import ConfirmAction from "../components/ConfirmAction";
-import { Button, Tooltip } from "bootstrap";
-import { FaEdit } from "react-icons/fa";
-import { RiDeleteBin5Line } from "react-icons/ri";
 import { fetchVenderOrder, setOrderItemStatus } from "../apis/orders";
 
 const OrderItemReady = () => {
+  const [selectedOrderItemId, setSelectedOrderItemId] = useState(null);
   const [orders, setOrders] = useState([]);
   const [showSpinner, setShowSpinner] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -39,13 +31,15 @@ const OrderItemReady = () => {
     setToastVariant(null);
     setToastMessage(null);
   };
+  const handleShowConfirm = (id) => {
+    setSelectedOrderItemId(id);
+    setShowConfirm(true);
+  };
   const handleConfirmAction = async () => {
+    setShowConfirm(false); // Hide confirmation dialo
     setShowSpinner(true); // Show spinner before starting the action
     try {
-      // await deleteOrder(selectedOrderId);
-
-      setShowConfirm(false); // Hide confirmation dialog
-      //   await loadOrders(); // Reload orders
+      await updateOrderStatus(selectedOrderItemId, "Ready");
     } catch (error) {
       console.error("Error during action:", error);
     } finally {
@@ -62,7 +56,7 @@ const OrderItemReady = () => {
         return;
       }
       if (data.data.length === 0) {
-        handleToastShow("No outlets found", "warning", "Warning");
+        handleToastShow("No order items found", "warning", "Warning");
         setOrders([]);
         return;
       }
@@ -70,7 +64,7 @@ const OrderItemReady = () => {
     } catch (err) {
       setOrders([]);
       console.error(err.message);
-      handleToastShow("Error loading outlets", "danger");
+      handleToastShow("Error order items outlets", "danger");
     }
   }, []);
 
@@ -172,8 +166,8 @@ const OrderItemReady = () => {
                       <Form.Select
                         name="customer"
                         value={order.status}
-                        onChange={(e) => {
-                          updateOrderStatus(order.id, e.target.value);
+                        onChange={() => {
+                          handleShowConfirm(order.id);
                         }}
                       >
                         <option value="">Select Status</option>

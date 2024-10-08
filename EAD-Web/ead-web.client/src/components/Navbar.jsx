@@ -53,6 +53,9 @@ const NavigationBar = () => {
                   <NavDropdown.Item href="/ConfirmOrder">
                     Ready Orders
                   </NavDropdown.Item>
+                  <NavDropdown.Item href="/CancelRequests">
+                    Cancel Requests
+                  </NavDropdown.Item>
                 </NavDropdown>
               </>
             )}

@@ -8,6 +8,9 @@ namespace EAD_Web.Server.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }  // Unique identifier for the order cancellation request
+
+        [BsonElement("orderId")]
         public string OrderId { get; set; }  // Unique identifier for the order
 
         [BsonElement("comment")]
@@ -15,10 +18,12 @@ namespace EAD_Web.Server.Models
 
         [BsonElement("createdAt")]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
-        public DateTime CreatedAt { get; set; }  // Date the order was created
+        public DateTime CreatedAt { get; set; }  // Date the order cancellation request was created
+        [BsonElement("isClosed")]
+        public bool IsClosed { get; set; }  // Whether the order cancellation request has been closed
 
         [BsonElement("updatedAt")]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
-        public DateTime UpdatedAt { get; set; }  // Date the order was last updated
+        public DateTime UpdatedAt { get; set; }  // Date the order cancellation request was last updated
     }
 }
