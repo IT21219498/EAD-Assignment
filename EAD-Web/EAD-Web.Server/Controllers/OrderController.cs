@@ -1,4 +1,9 @@
-﻿using EAD_Web.Server.Models;
+﻿/*
+ * File: OredrController.cs
+ * Description: Controller for managing create, update and manage customer orders. 
+ * Author: Mallawaarachchi D. E. H. - IT21209420
+ */
+using EAD_Web.Server.Models;
 using MongoDB.Driver;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -88,7 +93,7 @@ namespace EAD_Web.Server.Controllers
                 });
             }
         }
-
+        // Get maximum invoice number
         [HttpGet("getMaximumInvoiceNo")]
         public async Task<ActionResult> GetMaximumInvoiceNo()
         {
@@ -118,6 +123,7 @@ namespace EAD_Web.Server.Controllers
                 });
             }
         }
+        // Get all customers
         [HttpGet("customers")]
         public async Task<ActionResult> GetAllCustomers()
         {
@@ -155,6 +161,7 @@ namespace EAD_Web.Server.Controllers
                 });
             }
         }
+        // Get all products
         [HttpGet("products")]
         public async Task<ActionResult> GetAllProducts()
         {
@@ -198,6 +205,7 @@ namespace EAD_Web.Server.Controllers
                 });
             }
         }
+        //Save customer order
         [HttpPost("saveOrder")]
         public async Task<ActionResult> SaveOrder([FromBody] SaveOrderDTO orderRequest)
         {
@@ -251,7 +259,7 @@ namespace EAD_Web.Server.Controllers
                 });
             }
         }
-
+        //Delete a customer order
         [HttpDelete("deleteOrder/{orderId}")]
         public async Task<ActionResult> DeleteOrder(string orderId)
         {
@@ -288,6 +296,7 @@ namespace EAD_Web.Server.Controllers
 
             
         }
+        //Update a customer order
         [HttpPut("updateOrder/{orderId}")]
         public async Task<ActionResult> UpdateOrder(string orderId, [FromBody] SaveOrderDTO orderRequest)
         {
@@ -355,6 +364,7 @@ namespace EAD_Web.Server.Controllers
                 });
             }
         }
+        //Get all order items by order id
         [HttpGet("vendor/{vendorId}/new")]
         public async Task<IActionResult> GetNewOrderItemsByVendorId(string vendorId)
         {
@@ -533,7 +543,7 @@ namespace EAD_Web.Server.Controllers
                 });
             }
         }
-
+        //Update a cancel request
         [HttpPut("updateCancelRequests/{requestId}")]
         public async Task<ActionResult> UpdateCancelRequests(string requestId, [FromBody] bool isApproved)
         {
@@ -738,6 +748,7 @@ namespace EAD_Web.Server.Controllers
         //         public DateTime UpdatedAt { get; set; }  // Date the order was last updated
         //     }
         // }
+        //Add dummy cancel requests
         [HttpPost("dummyCancelRequests")]
         public async Task<ActionResult> AddDummyCancelRequests()
         {
