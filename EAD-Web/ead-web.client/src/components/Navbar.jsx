@@ -40,7 +40,7 @@ const NavigationBar = () => {
           <Nav className="me-auto">
             {/* Common Links */}
             <Nav.Link href="/">Home</Nav.Link>
-            {user.role === "Admin" && (
+            {user && user?.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -57,7 +57,7 @@ const NavigationBar = () => {
               </>
             )}
 
-            {user.role === "Admin" && (
+            {user && user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -77,7 +77,7 @@ const NavigationBar = () => {
               </>
             )}
 
-            {user.role === "Admin" && (
+            {user && user.role === "Admin" && (
               <>
                 {/* Admin-Specific Links */}
                 <NavDropdown
@@ -94,7 +94,7 @@ const NavigationBar = () => {
               </>
             )}
 
-            {user.role === "Vendor" && (
+            {user && user.role === "Vendor" && (
               <>
                 {/* Vendor-Specific Links */}
                 <NavDropdown
@@ -111,7 +111,7 @@ const NavigationBar = () => {
               </>
             )}
 
-            {user.role === "CSR" && (
+            {user && user.role === "CSR" && (
               <>
                 {/* CSR-Specific Links */}
                 <Nav.Link href="#customer-orders">

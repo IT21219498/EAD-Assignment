@@ -3,7 +3,7 @@ import { Table, Button, Pagination } from "react-bootstrap";
 import { fetchPendingUsers } from "../apis/fetchPendingusers";
 import { approveUser } from "../apis/approveUser";
 import { ToastContainer, toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';  // Import the toast styles
+import "react-toastify/dist/ReactToastify.css"; // Import the toast styles
 
 const PendingUsers = () => {
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -125,24 +125,6 @@ const PendingUsers = () => {
 
 export default PendingUsers;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // import React, { useEffect, useState } from "react";
 // import { Table, Button } from "react-bootstrap";
 // import { fetchPendingUsers } from "../apis/fetchPendingusers";
@@ -152,8 +134,6 @@ export default PendingUsers;
 
 // const PendingUsers = () => {
 //   const [pendingUsers, setPendingUsers] = useState([]);
-
-
 
 //   useEffect(() => {
 //     const getPendingUsers = async () => {

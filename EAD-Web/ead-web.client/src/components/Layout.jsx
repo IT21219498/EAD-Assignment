@@ -1,27 +1,27 @@
 import PropTypes from "prop-types";
-import { useState,useContext } from "react";
+import { useState, useContext } from "react";
 import NavigationBar from "./Navbar";
 import { useEffect } from "react";
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
+import { useNavigate } from "react-router-dom"; // Import useNavigate for redirection
 import AuthContext from "../contexts/AuthContext";
 
 const Layout = ({ children }) => {
   const { user } = useContext(AuthContext);
 
-  console.log("user data",user);
+  console.log("user data", user);
 
   const navigate = useNavigate(); // Initialize useNavigate for redirection
 
   return (
     <>
-        {user && (
+      {user && (
         <div style={{ marginBottom: "100px" }}>
-          <NavigationBar  />
+          <NavigationBar />
         </div>
       )}
-{/* {['Admin', 'Vendor', 'CSR'].includes(user.role) && <NavigationBar  /> } */}
-{/* <NavigationBar userRole={userRole} /> */}
-      <main className=' mt-4'>{children}</main>
+      {/* {['Admin', 'Vendor', 'CSR'].includes(user && user.role) && <NavigationBar  /> } */}
+      {/* <NavigationBar userRole={userRole} /> */}
+      <main className=" mt-4">{children}</main>
     </>
   );
 };
