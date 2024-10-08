@@ -9,6 +9,5 @@ namespace EAD_Web.Server.Models
         public string CustomerId { get; set; }
         public decimal Rating { get; set; }
         public string Comment { get; set; }
-        public string? CreatedAt { get; set; }
     }
 }

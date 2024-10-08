@@ -18,6 +18,7 @@ namespace EAD_Web.Server.Controllers
             _logger = logger;
         }
 
+        // Create a new vendor rating
         [HttpPost("newRating")]
         public async Task<IActionResult> CreateVendorRating([FromBody] VendorRating vendorRating)
         {
@@ -50,6 +51,7 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
+        // Update the comment of a vendor rating
         [HttpPut("{id}/comment")]
         public async Task<IActionResult> UpdateComment(string id, [FromBody] string newComment)
         {
@@ -84,6 +86,7 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
+        // Get a vendor rating by ID
         [HttpGet("{id}")]
         public async Task<IActionResult> GetReviewById(string id)
         {
@@ -117,6 +120,7 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
+        // Get all vendor ratings
         [HttpGet]
         public async Task<ActionResult<IEnumerable<VendorRating>>> GetAllReviews()
         {

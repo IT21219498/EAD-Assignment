@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import { useContext, useEffect, useState } from "react";
 import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import proptype from "prop-types";
@@ -19,16 +18,10 @@ const NavigationBar = () => {
   }, []);
 
   const handleLogout = () => {
-    console.log("User after logout", user);
-
     setUser(null);
-    // Clear the session storage
-    console.log("User after logout", user);
-
     sessionStorage.clear();
-    // Redirect to the login page
-    console.log("User after logout", user);
-    window.location.href = "/login";
+    sessionStorage.removeItem("token");
+    navigate("/login", { replace: true });
   };
 
   return (

@@ -12,9 +12,6 @@ const Layout = ({ children }) => {
 
   const navigate = useNavigate(); // Initialize useNavigate for redirection
 
-
-
-
   return (
     <>
         {user && (
@@ -22,7 +19,7 @@ const Layout = ({ children }) => {
           <NavigationBar  />
         </div>
       )}
-{/* {['Admin', 'Vendor', 'CSR'].includes(userRole) && <NavigationBar userRole={userRole} />} */}
+{/* {['Admin', 'Vendor', 'CSR'].includes(user.role) && <NavigationBar  /> } */}
 {/* <NavigationBar userRole={userRole} /> */}
       <main className=' mt-4'>{children}</main>
     </>
