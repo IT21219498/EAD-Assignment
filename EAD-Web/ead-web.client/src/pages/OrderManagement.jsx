@@ -508,6 +508,18 @@ const OrderManagement = () => {
                     ))}
                   </Form.Select>
                 </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Address</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="address"
+                      value={newOrder.address || ""}
+                      onChange={handleInputChange}
+                    />
+                  </Form.Group>
+                </Col>
+
                 <Col md={2}>
                   <Form.Group className="mb-3">
                     <Form.Label>Order Date</Form.Label>

@@ -48,6 +48,7 @@ namespace EAD_Web.Server.Controllers
                                 id = product.Id,
                                 price = product.Price
                                 },
+                                
                                 quantity = orderItem.Quantity,
                                 price = orderItem.Price,
                                 orderItemId = orderItem.OrderItemId
@@ -66,6 +67,7 @@ namespace EAD_Web.Server.Controllers
                             name = user?.FullName
                         },
                         status = order.Status,
+                        address = order.Address,
                         orderItems = orderItemResponse,
                         orderDate = order.OrderDate.Date.ToString("yyyy-MM-dd"),
                     });
@@ -210,7 +212,8 @@ namespace EAD_Web.Server.Controllers
                     Status = orderRequest.Status,
                     OrderDate = orderRequest.OrderDate,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
+                    Address = orderRequest.Address
                 };
 
                 // Insert the new order into the Orders collection
@@ -296,6 +299,7 @@ namespace EAD_Web.Server.Controllers
                 .Set(o => o.CustomerId, orderRequest.Customer.Id)
                 .Set(o => o.Status, orderRequest.Status)
                 .Set(o => o.OrderDate, orderRequest.OrderDate)
+                .Set(o => o.Address, orderRequest.Address)
                 .Set(o => o.UpdatedAt, DateTime.UtcNow);
 
             var result = await _mongoContext.Orders.UpdateOneAsync(filter, update);
@@ -477,129 +481,193 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
-        [HttpPost("addDummyOrders")]
-        public async Task<ActionResult> AddDummyOrders()
+        // [HttpPost("addDummyOrders")]
+        // public async Task<ActionResult> AddDummyOrders()
+        // {
+        //     try
+        //     {
+        //         var dummyOrders = new List<Orders>
+        // {
+        //     new Orders
+        //     {
+        //         OrderId = ObjectId.GenerateNewId().ToString(),
+        //         InvoiceNo = 1001,
+        //         CustomerId = "670181d28c096894a6fbf5b5",
+        //         Status = "Processing",
+        //         OrderDate = DateTime.UtcNow,
+        //         Address = "123 Main St, New York, NY 10001",
+        //         IsPaid = false,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new Orders
+        //     {
+        //         OrderId = ObjectId.GenerateNewId().ToString(),
+        //         InvoiceNo = 1002,
+        //         CustomerId = "6701826d8c096894a6fbf5b6",
+        //         Status = "Dispatched",
+        //         OrderDate = DateTime.UtcNow,
+        //         Address = "456 Elm St, New York, NY 10002",
+        //         IsPaid = true,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new Orders
+        //     {
+        //         OrderId = ObjectId.GenerateNewId().ToString(),
+        //         InvoiceNo = 1003,
+        //         CustomerId = "67019d664866a73d2cad6813",
+        //         Status = "Delivered",
+        //         OrderDate = DateTime.UtcNow,
+        //         Address = "123 Main St, New York, NY 10003",
+        //         IsPaid = true,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new Orders
+        //     {
+        //         OrderId = ObjectId.GenerateNewId().ToString(),
+        //         InvoiceNo = 1004,
+        //         CustomerId = "67021fabc55fc721fc3ee20e",
+        //         Status = "Cancelled",
+        //         OrderDate = DateTime.UtcNow,
+        //         Address = "456 Elm St, New York, NY 10004",
+        //         IsPaid = false,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     }
+        // };
+
+        //         var dummyOrderItems = new List<OrderItems>
+        // {
+        //     new OrderItems
+        //     {
+        //         OrderItemId = ObjectId.GenerateNewId().ToString(),
+        //         OrderId = dummyOrders[0].OrderId,
+        //         ProductId = "66fc3fc02c116c3d054f1c89",
+        //         VendorId = "66fc3606342696db9557e652",
+        //         Status =  "New",
+        //         Quantity = 2,
+        //         Price = 10.00m,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new OrderItems
+        //     {
+        //         OrderItemId = ObjectId.GenerateNewId().ToString(),
+        //         OrderId = dummyOrders[1].OrderId,
+        //         ProductId = "670015204e145f341a5a3abc",
+        //         VendorId = "66fc3613342696db9557e654",
+        //         Status =  "New",
+        //         Quantity = 1,
+        //         Price = 20.00m,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new OrderItems
+        //     {
+        //         OrderItemId = ObjectId.GenerateNewId().ToString(),
+        //         OrderId = dummyOrders[2].OrderId,
+        //         ProductId = "670015204e145f341a5a3abd",
+        //         VendorId = "670178ecdc5a517b902aeb85",
+        //         Status =  "Ready",
+        //         Quantity = 3,
+        //         Price = 15.00m,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     },
+        //     new OrderItems
+        //     {
+        //         OrderItemId = ObjectId.GenerateNewId().ToString(),
+        //         OrderId = dummyOrders[3].OrderId,
+        //         ProductId = "670015214e145f341a5a3abe",
+        //         VendorId = "6701928dd7649408388be35d",
+        //         Status = "Cancelled",
+        //         Quantity = 5,
+        //         Price = 5.00m,
+        //         CreatedAt = DateTime.UtcNow,
+        //         UpdatedAt = DateTime.UtcNow
+        //     }
+        // };
+
+        //         await _mongoContext.Orders.InsertManyAsync(dummyOrders);
+        //         await _mongoContext.OrderItems.InsertManyAsync(dummyOrderItems);
+
+        //         return Ok("Dummy orders and order items added successfully.");
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return BadRequest(new
+        //         {
+        //             status = "NOK",
+        //             message = $"An error occurred while adding dummy orders and order items: {ex.Message}"
+        //         });
+        //     }
+        // }
+// namespace EAD_Web.Server.Models
+// {
+//     public class OrderCancelsRequests
+//     {
+//         [BsonId]
+//         [BsonRepresentation(BsonType.ObjectId)]
+//         public string OrderId { get; set; }  // Unique identifier for the order
+
+//         [BsonElement("comment")]
+//         public string Comment { get; set; }  // Comment for the order cancellation]
+
+//         [BsonElement("createdAt")]
+//         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+//         public DateTime CreatedAt { get; set; }  // Date the order was created
+
+//         [BsonElement("updatedAt")]
+//         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+//         public DateTime UpdatedAt { get; set; }  // Date the order was last updated
+//     }
+// }
+        [HttpPost("dummyCancelRequests")]
+        public async Task<ActionResult> AddDummyCancelRequests()
         {
             try
             {
-                var dummyOrders = new List<Orders>
+                var dummyCancelRequests = new List<OrderCancelsRequests>
         {
-            new Orders
+            new OrderCancelsRequests
             {
-                OrderId = ObjectId.GenerateNewId().ToString(),
-                InvoiceNo = 1001,
-                CustomerId = "670181d28c096894a6fbf5b5",
-                Status = "Processing",
-                OrderDate = DateTime.UtcNow,
-                Address = "123 Main St, New York, NY 10001",
-                IsPaid = false,
+                OrderId = "60f1b9b3b3b3b3b3b3b3b3b3",
+                Comment = "Customer changed their mind",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            new Orders
+            new OrderCancelsRequests
             {
-                OrderId = ObjectId.GenerateNewId().ToString(),
-                InvoiceNo = 1002,
-                CustomerId = "6701826d8c096894a6fbf5b6",
-                Status = "Dispatched",
-                OrderDate = DateTime.UtcNow,
-                Address = "456 Elm St, New York, NY 10002",
-                IsPaid = true,
+                OrderId = "60f1b9b3b3b3b3b3b3b3b3b",
+                Comment = "Customer found a better deal",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            new Orders
+            new OrderCancelsRequests
             {
-                OrderId = ObjectId.GenerateNewId().ToString(),
-                InvoiceNo = 1003,
-                CustomerId = "67019d664866a73d2cad6813",
-                Status = "Delivered",
-                OrderDate = DateTime.UtcNow,
-                Address = "123 Main St, New York, NY 10003",
-                IsPaid = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new Orders
-            {
-                OrderId = ObjectId.GenerateNewId().ToString(),
-                InvoiceNo = 1004,
-                CustomerId = "67021fabc55fc721fc3ee20e",
-                Status = "Cancelled",
-                OrderDate = DateTime.UtcNow,
-                Address = "456 Elm St, New York, NY 10004",
-                IsPaid = false,
+                OrderId = "60f1b9b3b3b3b3b3b3b3b3c",
+                Comment = "Customer no longer needs the product",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             }
         };
 
-                var dummyOrderItems = new List<OrderItems>
-        {
-            new OrderItems
-            {
-                OrderItemId = ObjectId.GenerateNewId().ToString(),
-                OrderId = dummyOrders[0].OrderId,
-                ProductId = "66fc3fc02c116c3d054f1c89",
-                VendorId = "66fc3606342696db9557e652",
-                Status =  "New",
-                Quantity = 2,
-                Price = 10.00m,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new OrderItems
-            {
-                OrderItemId = ObjectId.GenerateNewId().ToString(),
-                OrderId = dummyOrders[1].OrderId,
-                ProductId = "670015204e145f341a5a3abc",
-                VendorId = "66fc3613342696db9557e654",
-                Status =  "New",
-                Quantity = 1,
-                Price = 20.00m,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new OrderItems
-            {
-                OrderItemId = ObjectId.GenerateNewId().ToString(),
-                OrderId = dummyOrders[2].OrderId,
-                ProductId = "670015204e145f341a5a3abd",
-                VendorId = "670178ecdc5a517b902aeb85",
-                Status =  "Ready",
-                Quantity = 3,
-                Price = 15.00m,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new OrderItems
-            {
-                OrderItemId = ObjectId.GenerateNewId().ToString(),
-                OrderId = dummyOrders[3].OrderId,
-                ProductId = "670015214e145f341a5a3abe",
-                VendorId = "6701928dd7649408388be35d",
-                Status = "Cancelled",
-                Quantity = 5,
-                Price = 5.00m,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            }
-        };
+                await _mongoContext.OrderCancelsRequests.InsertManyAsync(dummyCancelRequests);
 
-                await _mongoContext.Orders.InsertManyAsync(dummyOrders);
-                await _mongoContext.OrderItems.InsertManyAsync(dummyOrderItems);
-
-                return Ok("Dummy orders and order items added successfully.");
+                return Ok("Dummy order cancel requests added successfully.");
             }
             catch (Exception ex)
             {
                 return BadRequest(new
                 {
                     status = "NOK",
-                    message = $"An error occurred while adding dummy orders and order items: {ex.Message}"
+                    message = $"An error occurred while adding dummy order cancel requests: {ex.Message}"
                 });
             }
         }
+
 
 
 
