@@ -1,4 +1,9 @@
-﻿using EAD_Web.Server.Models;
+﻿/*
+ * File: RatingController.cs
+ * Description: Controller for managing Add a review, update review comment, get all reviews and get review By id.
+ * Author: Illesinghe A. T. - IT21286278
+ */
+using EAD_Web.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;

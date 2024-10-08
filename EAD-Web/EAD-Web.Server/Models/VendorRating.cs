@@ -1,4 +1,9 @@
-﻿using MongoDB.Bson;
+﻿/*
+ * File: VendorRating.cs
+ * Description: Model for vendor ratings.
+ * Author: Illesinghe A. T. - IT21286278
+ */
+using MongoDB.Bson;
 
 namespace EAD_Web.Server.Models
 {

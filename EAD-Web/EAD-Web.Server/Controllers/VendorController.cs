@@ -1,4 +1,10 @@
-﻿using EAD_Web.Server.Models;
+﻿/*
+ * File: VendorController.cs
+ * Description: Controller for managing create a new vendor, update vendor details, delete a vendor, get all vendors, 
+ * get a vendor by name.
+ * Author: Illesinghe A. T. - IT21286278
+ */
+using EAD_Web.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
