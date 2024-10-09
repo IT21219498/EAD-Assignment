@@ -12,7 +12,6 @@ export const registerUser = async (registerModel) =>{
 
         if (response.ok) {
             const result = await response.json();
-            console.log("Success:", result);
         } else {
             const error = await response.json();
             console.error("Error:", error);

@@ -8,7 +8,6 @@ export default function Toast({
   message,
   handleClose,
 }) {
-  console.log("🚀 ~ Toast ~ showToast:", showToast);
   title = title === "danger" ? "Error" : title;
   return (
     <BsToast

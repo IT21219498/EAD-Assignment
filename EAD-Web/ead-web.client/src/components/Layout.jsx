@@ -2,15 +2,14 @@ import PropTypes from "prop-types";
 import { useState, useContext } from "react";
 import NavigationBar from "./Navbar";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate for redirection
+import { useNavigate } from "react-router-dom"; 
 import AuthContext from "../contexts/AuthContext";
 
 const Layout = ({ children }) => {
   const { user } = useContext(AuthContext);
 
-  console.log("user data", user);
 
-  const navigate = useNavigate(); // Initialize useNavigate for redirection
+  const navigate = useNavigate(); 
 
   return (
     <>
@@ -19,8 +18,7 @@ const Layout = ({ children }) => {
           <NavigationBar />
         </div>
       )}
-      {/* {['Admin', 'Vendor', 'CSR'].includes(user && user.role) && <NavigationBar  /> } */}
-      {/* <NavigationBar userRole={userRole} /> */}
+ 
       <main className=" mt-4">{children}</main>
     </>
   );

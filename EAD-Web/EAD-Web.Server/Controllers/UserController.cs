@@ -213,6 +213,17 @@ namespace EAD_Web.Server.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+        //function to logout the user
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            // Sign out the user and clear the authentication cookie
+            await _signInManager.SignOutAsync();
+
+            // Optionally return a success message
+            return Ok(new { message = "Logout successful" });
+        }
+
 
 
 

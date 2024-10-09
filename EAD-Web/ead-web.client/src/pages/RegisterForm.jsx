@@ -1,7 +1,6 @@
 import React, { useState,useContext } from "react";
 
-import { useNavigate } from "react-router-dom"; // Import useNavigate for redirection
-// import { registerUser } from "../apis/register";
+import { useNavigate } from "react-router-dom"; 
 import { Link } from "react-router-dom";
 import Logo from '../assets/EADlogo.png';
 import AuthContext from '../contexts/AuthContext';
@@ -24,7 +23,6 @@ const RegisterForm = () => {
     role: "Vendor",
   });
 
-  // Handle input changes
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -32,7 +30,6 @@ const RegisterForm = () => {
     });
   };
 
-  // Handle role change for radio buttons
   const handleRoleChange = (e) => {
     setFormData({
       ...formData,
@@ -62,8 +59,7 @@ const RegisterForm = () => {
 
     // Check if passwords match
     if (formData.password !== formData.confirmPassword) {
-      // alert("Passwords do not match!");
-      showToast('Passwords do not match!', 'warning'); // Show error toast
+      showToast('Passwords do not match!', 'warning'); 
 
       return;
     }
@@ -71,13 +67,10 @@ const RegisterForm = () => {
     // Create a new object excluding confirmPassword
     const { confirmPassword, ...dataToSend } = formData;
 
-    console.log("Data to send:", dataToSend);
 
     try {
-      const response = await registerUser(dataToSend); // Register user with form data
-console.log("Reg Response",response);
+      const response = await registerUser(dataToSend); 
       if (response.ok) {
-        // alert("Registration successful!");
         if(role == "Vendor"){
           showToast('Account is pending approval.', 'success'); // Show error toast
         }else{
