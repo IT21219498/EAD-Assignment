@@ -1,5 +1,5 @@
 import React, { useState,useContext } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
+import { useNavigate } from 'react-router-dom';
 import AuthContext from '../contexts/AuthContext';
 import { Link } from "react-router-dom";
 import Logo from '../assets/EADlogo.png';
@@ -8,7 +8,7 @@ import NewToastContext from '../contexts/NewToastContext';
 
 const LoginForm = () => {
   const { loginUser } = useContext(AuthContext);
-  const { showToast } = useContext(NewToastContext); // Use the toast context
+  const { showToast } = useContext(NewToastContext); 
 
   const[formData,setFormData] = useState({
     email: "",
@@ -20,36 +20,30 @@ const LoginForm = () => {
     
 
 
-  //Hanlde input change
   const handleChange = (e) =>{
     setFormData({
       ...formData,
       [e.target.id]:e.target.value,
     });
   };
-    // Handle navigation to registration
     const handleCreateNew = () => {
       navigate('/register');
     };
 
-  //Handle form submission
   const handleSubmit = async (e) =>{
     e.preventDefault();
 
     try{
-      const response = await loginUser(formData); // Login user with form data
-console.log("Login response",response);
-      // If login is successful, navigate to the dashboard
+      const response = await loginUser(formData); 
       if (response.ok) {
-        showToast('Login successful!', 'success'); // Show success toast
-        navigate('/'); // Redirect to the dashboard
+        showToast('Login successful!', 'success'); 
+        navigate('/'); 
       }else{
-        // toast.error(`Invalid credentials. Please try again.`);
-        showToast('Invalid credentials. Please try again.', 'error'); // Show error toast
+        showToast('Invalid credentials. Please try again.', 'error'); 
       }
         }catch(error){
       console.error("Login request failed:",error);
-      showToast('Login failed. Please try again.', 'error'); // Show error toast
+      showToast('Login failed. Please try again.', 'error'); 
 
     }
   }

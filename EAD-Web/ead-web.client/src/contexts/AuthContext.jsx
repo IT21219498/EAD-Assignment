@@ -1,24 +1,26 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 
 const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  console.log("🚀 ~ AuthContextProvider ~ user:", user);
   const navigate = useNavigate();
   const location = useLocation();
 
+
   useEffect(() => {
     if (!user) {
+      Cookies.remove(".AspNetCore.Identity.Application");
+
       checkUserLoggedIn();
     }
   }, [navigate]);
 
   const checkUserLoggedIn = async () => {
     try {
-      const token = sessionStorage.getItem("token"); // Retrieve the token
-
+      const token = sessionStorage.getItem("token"); 
       const response = await fetch("/api/User/chk", {
         method: "GET",
         headers: {
@@ -28,7 +30,6 @@ export const AuthContextProvider = ({ children }) => {
 
       if (response.ok) {
         const userData = await response.json();
-        console.log("User Data:", userData);
         const { userId, role } = userData;
         setUser({ userId, role });
       } else {
@@ -39,7 +40,6 @@ export const AuthContextProvider = ({ children }) => {
     } catch (err) {
       setUser(null);
       sessionStorage.clear();
-      console.log(err);
       navigate("/login", { replace: true });
     }
   };
@@ -57,7 +57,6 @@ export const AuthContextProvider = ({ children }) => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log("Login successful:", result);
         const { token, userId, role } = result;
 
         sessionStorage.setItem("token", token);
@@ -67,11 +66,9 @@ export const AuthContextProvider = ({ children }) => {
         return response;
       } else {
         const error = await response.json();
-        console.error("Login error:", error);
         return error;
       }
     } catch (error) {
-      console.error("Request failed:", error);
       throw error; // Propagate the error
     }
   };
@@ -89,21 +86,50 @@ export const AuthContextProvider = ({ children }) => {
 
       if (response.ok) {
         const result = await response.json(); // Parse JSON response
-        console.log("Success:", result.message); // Access the 'message' field
+       
         return response;
       } else {
         const error = await response.json(); // Parse the error response
-        console.error("Error:", error);
         return error;
       }
     } catch (error) {
-      console.error("Request failed:", error);
       return error;
     }
   };
 
+// Logout Request
+const logoutUser = async () => {
+  console.log("Logout triggered");
+  
+  try {
+    const token = sessionStorage.getItem("token"); 
+    const response = await fetch("/api/User/logout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json", 
+        Authorization: `Bearer ${token}`, 
+      },
+    });
+
+    if (response.ok) {
+      sessionStorage.removeItem("token");
+      setUser(null);
+      Cookies.remove(".AspNetCore.Identity.Application");
+      navigate("/login", { replace: true });
+    } else {
+      const error = await response.json();
+      console.error("Logout error:", error);
+      return error; 
+    }
+  } catch (error) {
+    console.error("Logout request failed:", error);
+    return error; 
+  }
+};
+
+
   return (
-    <AuthContext.Provider value={{ loginUser, registerUser, user, setUser }}>
+    <AuthContext.Provider value={{ loginUser, registerUser, user, setUser,logoutUser }}>
       {children}
     </AuthContext.Provider>
   );

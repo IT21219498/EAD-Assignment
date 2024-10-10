@@ -1,27 +1,25 @@
 import { useContext, useEffect, useState } from "react";
 import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
-import proptype from "prop-types";
 import logo from "../assets/EADlogo.png";
 import { FaRegUserCircle } from "react-icons/fa";
 import AuthContext from "../contexts/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
+
+
 
 const NavigationBar = () => {
   const navigate = useNavigate();
 
-  const { user, setUser } = useContext(AuthContext);
+  const { user, setUser,logoutUser } = useContext(AuthContext);
 
   // useEffect hook to redirect to login if user is not authenticated
   useEffect(() => {
     !user && navigate("/login", { replace: true });
-    console.log("User after refresh", user);
   }, []);
 
-  const handleLogout = () => {
-    setUser(null);
-    sessionStorage.clear();
-    sessionStorage.removeItem("token");
-    navigate("/login", { replace: true });
+  const handleLogout = (e) => {
+    e.preventDefault(); // Prevent default action to avoid page refresh
+    logoutUser(); 
   };
 
   return (
