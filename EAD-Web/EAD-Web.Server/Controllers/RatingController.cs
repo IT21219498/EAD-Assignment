@@ -36,7 +36,7 @@ namespace EAD_Web.Server.Controllers
                 }
 
                 if (string.IsNullOrEmpty(vendorRating.VendorId) ||
-                    string.IsNullOrEmpty(vendorRating.CustomerId) ||
+                //    string.IsNullOrEmpty(vendorRating.CustomerId) ||
                     (vendorRating.Rating <= 0 && vendorRating.Rating >= 5))
                 {
                     return BadRequest("VendorId, CustomerId, and valid Rating are required.");
@@ -69,7 +69,7 @@ namespace EAD_Web.Server.Controllers
             try
             {
                 // Find the existing vendor rating by ID
-                var vendorRating = await _mongoContext.VendorRatings.Find(r => r.Id == ObjectId.Parse(id)).FirstOrDefaultAsync();
+                var vendorRating = await _mongoContext.VendorRatings.Find(r => r.Id == id).FirstOrDefaultAsync();
                 if (vendorRating == null)
                 {
                     return NotFound("Vendor rating not found.");
@@ -109,7 +109,7 @@ namespace EAD_Web.Server.Controllers
                 }
 
                 // Find the vendor rating by ID
-                var vendorRating = await _mongoContext.VendorRatings.Find(r => r.Id == objectId).FirstOrDefaultAsync();
+                var vendorRating = await _mongoContext.VendorRatings.Find(r => r.Id == id).FirstOrDefaultAsync();
 
                 if (vendorRating == null)
                 {
