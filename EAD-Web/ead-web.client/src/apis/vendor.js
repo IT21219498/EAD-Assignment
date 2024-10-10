@@ -1,3 +1,4 @@
+//API call for fetcing all vendors
 export const fetchVendors = async () => {
     try {
 
@@ -24,6 +25,7 @@ export const fetchVendors = async () => {
     }
 }
 
+//API call for saving vendor
 export const saveVendor = async (vendor) => {
 
     try {
@@ -50,6 +52,7 @@ export const saveVendor = async (vendor) => {
     }
 }
 
+//API call for fetching selected vendor
 export const getSelectedVendor = async (name) => {
 
     try {
@@ -76,6 +79,7 @@ export const getSelectedVendor = async (name) => {
     }
 }
 
+//API call for updating vendor
 export const updateVendor = async (vendor) => {
     try {
         const response = await fetch(`api/Vendor/${vendor.vendorName}`, {
@@ -101,6 +105,7 @@ export const updateVendor = async (vendor) => {
     }
 }
 
+//  API call for deleting vendor
 export const deleteVendor = async (name) => {
     try {
         const response = await fetch(`api/Vendor/${name}`, {
