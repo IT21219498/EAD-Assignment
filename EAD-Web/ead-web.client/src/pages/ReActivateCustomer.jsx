@@ -18,9 +18,10 @@ const ReActivateCustomer = () => {
             }
         };
         getDeActivatedCustomers();
-    })
+    },[])
 
     const handleApproveCustomer = async(customerId) =>{
+      console.log("after click id",customerId);
         try{
             await approveDeActivatedCustomer(customerId);
             setDeActivatedCustomers(pendingCustomers.filter((user) => user.customerId !== customerId));
@@ -48,6 +49,8 @@ const ReActivateCustomer = () => {
           <tbody>
             {pendingCustomers.map((user) => (
               <tr key={user.customerId}>
+                {console.log("pending custimer",user)
+                }
                 <td>{user.fullName}</td>
                 <td>{user.email}</td>
                 <td>

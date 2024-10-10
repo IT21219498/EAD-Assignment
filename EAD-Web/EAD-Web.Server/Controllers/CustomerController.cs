@@ -57,7 +57,7 @@ namespace EAD_Web.Server.Controllers
             };
 
             await _customers.InsertOneAsync(customer);
-            return Ok("Customer registered successfully, pending activation.");
+            return Ok(new { message = "Customer registered successfully, pending activation." });
         }
         // Activates a customer account based on the provided customer ID.
         [HttpPost("activate/{customerId}")]
@@ -134,7 +134,8 @@ namespace EAD_Web.Server.Controllers
                 return NotFound("Customer not found");
             }
 
-            return Ok("Customer account updated successfully.");
+            return Ok(new { message = "Customer account updated successfully." });
+
         }
 
         // Deactivates a customer account based on the provided customer ID.
@@ -159,7 +160,8 @@ namespace EAD_Web.Server.Controllers
                 return NotFound("Customer not found");
             }
 
-            return Ok("Customer account deactivated successfully.");
+           return Ok(new { message = "Customer account deactivated successfully." });
+
         }
 
         // Authenticates a customer and generates a JWT token upon successful login.
@@ -178,13 +180,18 @@ namespace EAD_Web.Server.Controllers
             // Generate JWT token
             var token = GenerateJwtToken(customer);
 
-            // Return the token and customerId in the response
+            // Return token and customer details in the response
             return Ok(new
             {
                 token,
-                customerId = customer.CustomerId.ToString()  // Convert ObjectId to string
+                customerId = customer.CustomerId.ToString(),  // Convert ObjectId to string
+                fullName = customer.FullName,
+                email = customer.Email,
+                phoneNumber = customer.PhoneNumber,
+                address = customer.Address
             });
         }
+
 
 
         // Generates a JWT token for the authenticated customer.

@@ -1,4 +1,4 @@
-export const approveDeActivatedCustomer = async (userId) => {
+export const approveDeActivatedCustomer = async (customerId) => {
     try {
       const response = await fetch(`/api/Customer/reactivate/${customerId}`, {
         method: "POST",
