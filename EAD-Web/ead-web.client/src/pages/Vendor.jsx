@@ -25,7 +25,7 @@ const Vendor = () => {
   const [actionType, setActionType] = useState("");
   const [selectedVendorName, setSelectedVendorName] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8; 
+  const itemsPerPage = 5; 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentVendors = vendors.slice(indexOfFirstItem, indexOfLastItem);
