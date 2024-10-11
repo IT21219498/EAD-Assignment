@@ -1,3 +1,16 @@
+/*
+    This file contains the controller for handling product related operations.
+    It includes the following operations:
+    - Get all products with category and measuring unit details
+    - Get all categories
+    - Get all measuring units
+    - Create a new product
+    - Get product details by ID
+    - Update product details
+    - Delete product by ID
+    - Update product status
+*/
+
 using EAD_Web.Server.Models;
 using MongoDB.Driver;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +36,7 @@ namespace EAD_Web.Server.Controllers
             
         }
 
-        // Get all products
+        // Get all products with category and measuring unit details
         [HttpGet("products")]
         public async Task<ActionResult<IEnumerable<Product>>> GetAllProducts()
         {
@@ -31,6 +44,49 @@ namespace EAD_Web.Server.Controllers
             {
                 var products = new List<Product>();
                 products = await _mongoContext.Products.Find(_ => true).ToListAsync();
+
+                var productsDto = new List<ProductDto>();
+
+                foreach (var product in products)
+                {
+                    var category = await _mongoContext.Categories.Find(x => x.Id == product.CategoryId).FirstOrDefaultAsync();
+                    var measuringUnit = await _mongoContext.Measuringunits.Find(x => x.Id == product.MeasurementUnitId).FirstOrDefaultAsync();
+
+                    productsDto.Add(new ProductDto
+                    {
+                        Id = product.Id,
+                        Name = product.Name,
+                        Code = product.Code,
+                        Price = product.Price,
+                        Cost = product.Cost,
+                        ReorderLevel = product.ReorderLevel,
+                        CategoryId = product.CategoryId,
+                        CategoryName = category.Name,
+                        MeasurementUnitName = measuringUnit.Unit,
+                        Description = product.Description,
+                        ItemPerCase = product.ItemPerCase,
+                        ImageUrl = product.ImageUrl,
+                        IsActive = product.IsActive 
+                    });
+                }
+
+                return Ok(productsDto);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in getting all products");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // Get all products with category and measuring unit details
+        [HttpGet("activeproducts")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetAllActiveProducts()
+        {
+            try
+            {
+                var products = new List<Product>();
+                products = await _mongoContext.Products.Find(p => p.IsActive == true).ToListAsync();
 
                 var productsDto = new List<ProductDto>();
 
@@ -98,6 +154,7 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
+        // Create a new product
        [HttpPost("create")]
         public async Task<IActionResult> CreateProduct([FromBody] ProductDto productDto)
         {
@@ -134,6 +191,16 @@ namespace EAD_Web.Server.Controllers
 
                 await _mongoContext.Products.InsertOneAsync(newProduct);
 
+                //Initialize the stock for the new product
+                var newStock = new Stock
+                {
+                    ProductId = newProduct.Id,
+                    Quantity = 0,
+                    IsActive = true
+                };
+
+                await _mongoContext.Stock.InsertOneAsync(newStock);
+
                 return CreatedAtAction(nameof(GetProductById), new { id = newProduct.Id }, newProduct);
             }
             catch (System.Exception ex)
@@ -143,6 +210,7 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
+        // Get product details by ID
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProductById(string id)
         {
@@ -166,7 +234,8 @@ namespace EAD_Web.Server.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
+ 
+        // Update product details
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(string id, [FromBody] ProductDto productDto)
         {
@@ -219,6 +288,7 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
+        // Delete product by ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(string id)
         {
@@ -235,6 +305,11 @@ namespace EAD_Web.Server.Controllers
                 }
 
                 await _mongoContext.Products.DeleteOneAsync(p => p.Id == id);
+
+                //Delete the stock for the product
+                await _mongoContext.Stock.DeleteOneAsync(s => s.ProductId == id);
+
+
 
                 return Ok("Product deleted successfully.");
             }
@@ -273,5 +348,108 @@ namespace EAD_Web.Server.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        //get product by category
+        [HttpGet("category/{categoryId}")]
+        public async Task<IActionResult> GetProductByCategory(string categoryId)
+        {
+            if (!ObjectId.TryParse(categoryId, out _))
+            {
+                return BadRequest("Invalid category ID.");
+            }
+
+            try{
+                var products = await _mongoContext.Products.Find(p => p.CategoryId == categoryId).ToListAsync();
+                if (products == null)
+                {
+                    return NotFound("Products not found.");
+
+                }
+
+                var productsDto = new List<ProductDto>();
+
+                foreach (var product in products)
+
+                {
+                    var category = await _mongoContext.Categories.Find(x => x.Id == product.CategoryId).FirstOrDefaultAsync();
+                    var measuringUnit = await _mongoContext.Measuringunits.Find(x => x.Id == product.MeasurementUnitId).FirstOrDefaultAsync();
+
+                    productsDto.Add(new ProductDto
+                    {
+                        Id = product.Id,
+                        Name = product.Name,
+                        Code = product.Code,
+                        Price = product.Price,
+                        Cost = product.Cost,
+                        ReorderLevel = product.ReorderLevel,
+                        CategoryId = product.CategoryId,
+                        CategoryName = category.Name,
+                        MeasurementUnitName = measuringUnit.Unit,
+                        Description = product.Description,
+                        ItemPerCase = product.ItemPerCase,
+                        ImageUrl = product.ImageUrl,
+                        IsActive = product.IsActive
+                    });
+
+                }
+
+                return Ok(productsDto);
+
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in getting product by category");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        //search product by name
+        [HttpGet("search/{name}")]
+        public async Task<IActionResult> SearchProductByName(string name)
+        {
+            try{
+                var products = await _mongoContext.Products.Find(p => p.Name.ToLower().Contains(name.ToLower())).ToListAsync();
+                if (products == null)
+                {
+                    return NotFound("Products not found.");
+                }
+
+                var productsDto = new List<ProductDto>();
+
+                foreach (var product in products)
+                {
+                    var category = await _mongoContext.Categories.Find(x => x.Id == product.CategoryId).FirstOrDefaultAsync();
+                    var measuringUnit = await _mongoContext.Measuringunits.Find(x => x.Id == product.MeasurementUnitId).FirstOrDefaultAsync();
+
+                    productsDto.Add(new ProductDto
+                    {
+                        Id = product.Id,
+                        Name = product.Name,
+                        Code = product.Code,
+                        Price = product.Price,
+                        Cost = product.Cost,
+                        ReorderLevel = product.ReorderLevel,
+                        CategoryId = product.CategoryId,
+                        CategoryName = category.Name,
+                        MeasurementUnitName = measuringUnit.Unit,
+                        Description = product.Description,
+                        ItemPerCase = product.ItemPerCase,
+                        ImageUrl = product.ImageUrl,
+                        IsActive = product.IsActive
+                    });
+
+                }
+
+                return Ok(productsDto);
+
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error in searching product by name");
+                return BadRequest(ex.Message);
+            }
+        }
+
+
     }
 }
