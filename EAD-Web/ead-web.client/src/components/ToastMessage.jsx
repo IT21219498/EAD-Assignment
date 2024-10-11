@@ -9,7 +9,7 @@ const ToastMessage = ({
   variant = "success",
   position = "top-end",
 }) => {
-  console.log(variant);
+  // console.log(variant);
   return (
     <ToastContainer position={position} className='p-3'>
       <Toast

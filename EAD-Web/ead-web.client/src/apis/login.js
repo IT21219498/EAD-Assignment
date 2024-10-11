@@ -10,7 +10,6 @@ export const loginUser = async (loginModel) => {
 
         if (response.ok) {
             const result = await response.json();
-            console.log("Login successful:", result);
             const { token, userId, role } = result;
 
             sessionStorage.setItem('token', token);

@@ -7,7 +7,6 @@ const Dashboard = () => {
   const navigate = useNavigate(); // Initialize the navigate function
   const { user } = useContext(AuthContext);
 
-  console.log("User Role:", user && user.role);
 
   // Define card data for each role
   const adminCards = [
