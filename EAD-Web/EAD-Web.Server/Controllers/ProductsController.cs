@@ -94,7 +94,9 @@ namespace EAD_Web.Server.Controllers
                 {
                     var category = await _mongoContext.Categories.Find(x => x.Id == product.CategoryId).FirstOrDefaultAsync();
                     var measuringUnit = await _mongoContext.Measuringunits.Find(x => x.Id == product.MeasurementUnitId).FirstOrDefaultAsync();
-
+ 
+                    var supplierId = ObjectId.Parse(product.SupplierId);
+                    var supplier = await _mongoContext.Vendors.Find(x => x.Id == supplierId).FirstOrDefaultAsync();
                     productsDto.Add(new ProductDto
                     {
                         Id = product.Id,
@@ -105,6 +107,7 @@ namespace EAD_Web.Server.Controllers
                         ReorderLevel = product.ReorderLevel,
                         CategoryId = product.CategoryId,
                         CategoryName = category.Name,
+                        SupplierName = supplier.vendorName,
                         MeasurementUnitName = measuringUnit.Unit,
                         Description = product.Description,
                         ItemPerCase = product.ItemPerCase,
