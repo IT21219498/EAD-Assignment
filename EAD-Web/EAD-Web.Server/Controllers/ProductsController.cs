@@ -229,7 +229,42 @@ namespace EAD_Web.Server.Controllers
                     return NotFound("Product not found.");
                 }
 
-                return Ok(product);
+                 
+
+                    var supplierName = "";
+
+          
+
+                    if (product.SupplierId != null)
+                    {
+                        var supplierId = ObjectId.Parse(product.SupplierId);
+                        var supplier = await _mongoContext.Vendors.Find(x => x.Id == supplierId).FirstOrDefaultAsync();
+                        supplierName = supplier.vendorName;
+
+                    }
+
+                    var productDto = new ProductDto
+                    {
+                        Id = product.Id,
+                        Name = product.Name,
+                        Code = product.Code,
+                        Price = product.Price,
+                        Cost = product.Cost,
+                        ReorderLevel = product.ReorderLevel,
+                        CategoryId = product.CategoryId,
+                        SupplierName = supplierName,
+                        Description = product.Description,
+                        ItemPerCase = product.ItemPerCase,
+                        ImageUrl = product.ImageUrl,
+                        IsActive = product.IsActive
+                    };
+
+
+              
+
+                return Ok(productDto);
+
+               
             }
             catch (System.Exception ex)
             {
