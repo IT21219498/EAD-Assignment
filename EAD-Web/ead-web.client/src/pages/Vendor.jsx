@@ -287,7 +287,7 @@ const Vendor = () => {
                   <td className='text-center'>
                       <OverlayTrigger
                           placement='top'
-                          overlay={<Tooltip>Edit Product</Tooltip>}
+                          overlay={<Tooltip>Edit Vendor</Tooltip>}
                       >
                           <Button
                               variant='outline-secondary'
@@ -300,7 +300,7 @@ const Vendor = () => {
 
                       <OverlayTrigger
                           placement='top'
-                          overlay={<Tooltip>Delete Product</Tooltip>}
+                          overlay={<Tooltip>Delete Vendor</Tooltip>}
                       >
                           <Button
                               variant='outline-danger'
@@ -468,7 +468,7 @@ const Vendor = () => {
             Reset
           </Button>
           <Button variant="primary" onClick={handleSaveVendor}>
-            {editingVendor ? "Update Product" : "Add Product"}
+            {editingVendor ? "Update Vendor" : "Add Vendor"}
           </Button>
         </Modal.Footer>
       </Modal>
