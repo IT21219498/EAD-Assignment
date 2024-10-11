@@ -342,21 +342,21 @@ const OrderManagement = () => {
         show={showConfirm}
         onHide={() => setShowConfirm(false)}
         onConfirm={handleConfirmAction}
-        title="Are you sure?"
+        title='Are you sure?'
         message={
           actionType === "delete"
             ? "This will permanently delete the order."
             : "This will change the product's status."
         }
-        confirmLabel={actionType === "delete" ? "Delete" : "Yes, Update"}
+        confirmLabel={actionType === "delete" ? "Delete" : "Yes, Delete"}
         confirmVariant={actionType === "delete" ? "danger" : "primary"}
       />
 
-      <div className="container ">
-        <h2 className="d-flex justify-content-center">Orders</h2>
+      <div className='container '>
+        <h2 className='d-flex justify-content-center'>Orders</h2>
         <Button
-          variant="primary"
-          className="mb-3"
+          variant='primary'
+          className='mb-3'
           onClick={() => handleModalShow()}
         >
           New Order
@@ -376,10 +376,10 @@ const OrderManagement = () => {
           <tbody>
             {showSpinner && (
               <tr>
-                <td colSpan="5">
-                  <div className="d-flex justify-content-center align-items-center">
-                    <Spinner animation="grow" />
-                    <p className="mt-1 ml-2">Please Wait...</p>
+                <td colSpan='5'>
+                  <div className='d-flex justify-content-center align-items-center'>
+                    <Spinner animation='grow' />
+                    <p className='mt-1 ml-2'>Please Wait...</p>
                   </div>
                 </td>
               </tr>
@@ -392,18 +392,18 @@ const OrderManagement = () => {
                     <td>{order.customer.email}</td>
                     <td>{order.orderDate}</td>
                     <td>{order.status}</td>
-                    <td className="text-center">
+                    <td className='text-center'>
                       {order.status !== "Delivered" &&
                         order.status !== "Partially Delivered" &&
                         order.status !== "Cancelled" && (
                           <OverlayTrigger
-                            placement="top"
+                            placement='top'
                             overlay={<Tooltip>Edit Order</Tooltip>}
                           >
                             <Button
-                              variant="outline-secondary"
+                              variant='outline-secondary'
                               onClick={() => handleModalShow(order)}
-                              className="mx-2"
+                              className='mx-2'
                             >
                               <FaEdit />
                             </Button>
@@ -428,7 +428,7 @@ const OrderManagement = () => {
             )}
           </tbody>
         </Table>
-        <Pagination className="justify-content-center">
+        <Pagination className='justify-content-center'>
           <Pagination.First
             onClick={() => handlePageChange(1)}
             disabled={currentPage === 1}
@@ -459,7 +459,7 @@ const OrderManagement = () => {
         </Pagination>
 
         {/* Modal for Add/Edit Product */}
-        <Modal show={showModal} onHide={handleModalClose} size="xl">
+        <Modal show={showModal} onHide={handleModalClose} size='xl'>
           <Modal.Header closeButton>
             <Modal.Title>
               {editingOrder ? "Edit Order" : "Add New Order"}
@@ -469,11 +469,11 @@ const OrderManagement = () => {
             <Form>
               <Row>
                 <Col md={2}>
-                  <Form.Group className="mb-3">
+                  <Form.Group className='mb-3'>
                     <Form.Label>InvoiceNo</Form.Label>
                     <Form.Control
-                      type="text"
-                      name="invoiceNo"
+                      type='text'
+                      name='invoiceNo'
                       value={newOrder.invoiceNo}
                       onChange={handleInputChange}
                       disabled
@@ -483,7 +483,7 @@ const OrderManagement = () => {
                 <Col md={4}>
                   <Form.Label>Customer</Form.Label>
                   <Form.Select
-                    name="customer"
+                    name='customer'
                     value={newOrder.customer.id || ""}
                     onChange={(e) => {
                       let selectedCustomer = customers.find(
@@ -500,7 +500,7 @@ const OrderManagement = () => {
                       });
                     }}
                   >
-                    <option value="">Select Customer</option>
+                    <option value=''>Select Customer</option>
                     {customers.map((customer) => (
                       <option key={customer.id} value={customer.id}>
                         {customer.name}
@@ -509,11 +509,11 @@ const OrderManagement = () => {
                   </Form.Select>
                 </Col>
                 <Col md={3}>
-                  <Form.Group className="mb-3">
+                  <Form.Group className='mb-3'>
                     <Form.Label>Address</Form.Label>
                     <Form.Control
-                      type="text"
-                      name="address"
+                      type='text'
+                      name='address'
                       value={newOrder.address || ""}
                       onChange={handleInputChange}
                     />
@@ -521,31 +521,31 @@ const OrderManagement = () => {
                 </Col>
 
                 <Col md={2}>
-                  <Form.Group className="mb-3">
+                  <Form.Group className='mb-3'>
                     <Form.Label>Order Date</Form.Label>
                     <Form.Control
-                      type="date"
-                      name="orderDate"
+                      type='date'
+                      name='orderDate'
                       value={newOrder.orderDate}
                       onChange={handleInputChange}
                     />
                   </Form.Group>
                 </Col>
                 <Col md={3}>
-                  <Form.Group className="mb-3">
+                  <Form.Group className='mb-3'>
                     <Form.Label>Status</Form.Label>
                     <Form.Select
-                      name="status"
+                      name='status'
                       value={newOrder.status}
                       onChange={handleInputChange}
                     >
-                      <option value="">Select Status</option>
-                      <option value="Processing">Processing</option>
-                      <option value="Partially Delivered">
+                      <option value=''>Select Status</option>
+                      <option value='Processing'>Processing</option>
+                      <option value='Partially Delivered'>
                         Partially Delivered
                       </option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="Cancelled">Cancelled</option>
+                      <option value='Delivered'>Delivered</option>
+                      <option value='Cancelled'>Cancelled</option>
                     </Form.Select>
                   </Form.Group>
                 </Col>
@@ -566,7 +566,7 @@ const OrderManagement = () => {
                       <td>
                         <Form.Select
                           key={index}
-                          name="product"
+                          name='product'
                           value={product?.product?.id || ""}
                           onChange={(e) => {
                             let selectedProduct = products.find(
@@ -590,7 +590,7 @@ const OrderManagement = () => {
                             );
                           }}
                         >
-                          <option value="">Select Product</option>
+                          <option value=''>Select Product</option>
                           {products.map((product) => (
                             <option key={product.id} value={product.id}>
                               {product.name}
@@ -600,16 +600,16 @@ const OrderManagement = () => {
                       </td>
                       <td>
                         <Form.Control
-                          type="number"
-                          name="quantity"
+                          type='number'
+                          name='quantity'
                           value={product.quantity}
                           onChange={(e) => handleInputOrderItem(e, index)}
                         />
                       </td>
                       <td>
                         <Form.Control
-                          type="number"
-                          name="price"
+                          type='number'
+                          name='price'
                           value={product?.product?.price || 0}
                           disabled={true}
                         />
@@ -619,26 +619,26 @@ const OrderManagement = () => {
                       <td>
                         {index === newOrder.orderItems.length - 1 && (
                           <OverlayTrigger
-                            placement="top"
+                            placement='top'
                             overlay={<Tooltip>Add Product</Tooltip>}
                           >
                             <Button
-                              variant="outline-secondary"
+                              variant='outline-secondary'
                               onClick={() => handleAddOrderItem(product)}
-                              className="mx-2"
+                              className='mx-2'
                             >
                               <FaPlus />
                             </Button>
                           </OverlayTrigger>
                         )}
                         <OverlayTrigger
-                          placement="top"
+                          placement='top'
                           overlay={<Tooltip>Delete Product</Tooltip>}
                         >
                           <Button
-                            variant="outline-secondary"
+                            variant='outline-secondary'
                             onClick={(e) => handleRemoveOrderItem(e, index)}
-                            className="mx-2"
+                            className='mx-2'
                           >
                             <RiDeleteBin5Line />
                           </Button>
@@ -651,10 +651,10 @@ const OrderManagement = () => {
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={handleModalClose}>
+            <Button variant='secondary' onClick={handleModalClose}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleSaveOrder}>
+            <Button variant='primary' onClick={handleSaveOrder}>
               {editingOrder ? "Update Order" : "Add Order"}
             </Button>
           </Modal.Footer>

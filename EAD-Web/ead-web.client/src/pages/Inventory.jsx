@@ -10,6 +10,7 @@ import {
   OverlayTrigger,
   Pagination,
   Row,
+  Spinner,
   Table,
   Tooltip,
 } from "react-bootstrap";
@@ -62,6 +63,7 @@ const Inventory = () => {
   const totalPages = Math.ceil(inventory.length / itemsPerPage);
   const [showProducts, setShowProducts] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
+  const [showSpinner, setShowSpinner] = useState(false);
 
   const handleToggleProducts = () => {
     setShowProducts(!showProducts);
@@ -86,11 +88,14 @@ const Inventory = () => {
   };
 
   const loadInventory = async () => {
+    setShowSpinner(true);
     try {
       const data = await fetchInventory();
       setInventory(data);
     } catch (error) {
       handleShowToast("Error", error.message, "danger");
+    } finally {
+      setShowSpinner(false);
     }
   };
 
@@ -104,6 +109,7 @@ const Inventory = () => {
   };
 
   const handleStockUpdate = async () => {
+    setShowSpinner(true);
     try {
       const newStock = {
         id: stockForm.id,
@@ -121,10 +127,13 @@ const Inventory = () => {
     } catch (error) {
       console.error("Error:", error);
       handleShowToast("Error", error.message, "danger");
+    } finally {
+      setShowSpinner(false);
     }
   };
 
   const handleDeleteProduct = async () => {
+    setShowSpinner(true);
     try {
       const response = await deleteStock(selectedStock);
       if (response.error) {
@@ -137,6 +146,8 @@ const Inventory = () => {
     } catch (error) {
       console.error("Error:", error);
       handleShowToast("Error", error.message, "danger");
+    } finally {
+      setShowSpinner(false);
     }
   };
 
@@ -230,40 +241,51 @@ const Inventory = () => {
           </tr>
         </thead>
         <tbody>
-          {currentInventory.map((item) => (
-            <tr key={item.id}>
-              <td>{item.productName}</td>
-              <td className='text-end'>
-                {Number(item.sellingPrice).toFixed(2)}
-              </td>
-              <td className='text-center'>{item.quantity}</td>
-              <td className='text-center'>
-                <OverlayTrigger
-                  placement='top'
-                  overlay={<Tooltip>Update Stock</Tooltip>}
-                >
-                  <Button
-                    variant='outline-secondary'
-                    onClick={() => handleModalShow(item)}
-                    className='mx-2'
-                  >
-                    <FaEdit />
-                  </Button>
-                </OverlayTrigger>
-                <OverlayTrigger
-                  placement='top'
-                  overlay={<Tooltip>Delete Stock</Tooltip>}
-                >
-                  <Button
-                    variant='outline-danger'
-                    onClick={() => handleShowConfirm("delete", item.id)}
-                  >
-                    <RiDeleteBin5Line />
-                  </Button>
-                </OverlayTrigger>
+          {showSpinner ? (
+            <tr>
+              <td colSpan='4'>
+                <div className='d-flex justify-content-center align-items-center'>
+                  <Spinner animation='grow' />
+                  <p className='mt-1 ms-2'>Loading...</p>
+                </div>
               </td>
             </tr>
-          ))}
+          ) : (
+            currentInventory.map((item) => (
+              <tr key={item.id}>
+                <td>{item.productName}</td>
+                <td className='text-end'>
+                  {Number(item.sellingPrice).toFixed(2)}
+                </td>
+                <td className='text-center'>{item.quantity}</td>
+                <td className='text-center'>
+                  <OverlayTrigger
+                    placement='top'
+                    overlay={<Tooltip>Update Stock</Tooltip>}
+                  >
+                    <Button
+                      variant='outline-secondary'
+                      onClick={() => handleModalShow(item)}
+                      className='mx-2'
+                    >
+                      <FaEdit />
+                    </Button>
+                  </OverlayTrigger>
+                  <OverlayTrigger
+                    placement='top'
+                    overlay={<Tooltip>Delete Stock</Tooltip>}
+                  >
+                    <Button
+                      variant='outline-danger'
+                      onClick={() => handleShowConfirm("delete", item.id)}
+                    >
+                      <RiDeleteBin5Line />
+                    </Button>
+                  </OverlayTrigger>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </Table>
       <Pagination className='justify-content-center'>

@@ -8,6 +8,7 @@ import {
   Col,
   OverlayTrigger,
   Tooltip,
+  Spinner,
 } from "react-bootstrap";
 import { FaEdit } from "react-icons/fa";
 import { RiDeleteBin5Line } from "react-icons/ri";
@@ -74,6 +75,7 @@ const Products = () => {
   const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
   const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
   const totalPages = Math.ceil(products.length / itemsPerPage);
+  const [showSpinner, setShowSpinner] = useState(true);
 
   useEffect(() => {
     Promise.all([loadProducts(), loadCategories(), loadUOMs()]);
@@ -88,12 +90,15 @@ const Products = () => {
   };
 
   const loadProducts = async () => {
+    setShowSpinner(true);
     try {
       const data = await fetchProducts();
       setProducts(data);
     } catch (error) {
       handleShowToast("Error", error.message, "danger");
       console.error("Error:", error);
+    } finally {
+      setShowSpinner(false);
     }
   };
 
@@ -218,6 +223,7 @@ const Products = () => {
   };
 
   const handleSaveProduct = async () => {
+    setShowSpinner(true);
     if (!validateForm()) {
       return;
     }
@@ -247,17 +253,20 @@ const Products = () => {
           return;
         } else {
           handleShowToast("Success", "Product added successfully", "success");
-          // handleModalClose();
+          handleModalClose();
           loadProducts();
         }
       }
     } catch (error) {
       handleShowToast("Error", error.message, "danger");
       console.error("Error:", error);
+    } finally {
+      setShowSpinner(false);
     }
   };
 
   const handleUpdateProduct = async () => {
+    setShowSpinner(true);
     if (editingProduct === null) {
       handleShowToast("Error", "Product not found", "danger");
       return;
@@ -292,10 +301,13 @@ const Products = () => {
     } catch (error) {
       handleShowToast("Error", error.message, "danger");
       console.error("Error:", error);
+    } finally {
+      setShowSpinner(false);
     }
   };
 
   const handleDeleteProduct = async (id) => {
+    setShowSpinner(true);
     if (id === null) {
       handleShowToast("Error", "Product not found", "danger");
       return;
@@ -314,10 +326,13 @@ const Products = () => {
     } catch (error) {
       handleShowToast("Error", error.message, "danger");
       console.error("Error:", error);
+    } finally {
+      setShowSpinner(false);
     }
   };
 
   const toggleProductStatus = async (product) => {
+    setShowSpinner(true);
     if (product.id === null) {
       handleShowToast("Error", "Product not found", "danger");
       return;
@@ -335,6 +350,8 @@ const Products = () => {
     } catch (error) {
       handleShowToast("Error", error.message, "danger");
       console.error("Error:", error);
+    } finally {
+      setShowSpinner(false);
     }
   };
 
@@ -396,70 +413,85 @@ const Products = () => {
           </tr>
         </thead>
         <tbody>
-          {currentProducts.map((product) => (
-            <tr key={product.id}>
-              <td>{product.name}</td>
-              <td>{product.description}</td>
-              <td>{product.code}</td>
-              <td>{product.categoryName}</td>
-              <td>{product.measurementUnitName}</td>
-              <td className='text-center'>{product.itemPerCase}</td>
-              <td className='text-end'>{Number(product.cost).toFixed(2)}</td>
-              <td className='text-end'>{Number(product.price).toFixed(2)}</td>
-              <td className='text-center'>
-                {product.isActive ? "Active" : "Inactive"}
-              </td>
-              <td className='text-center'>
-                <OverlayTrigger
-                  placement='top'
-                  overlay={
-                    <Tooltip>
-                      {product.isActive
-                        ? "Deactivate Product"
-                        : "Activate Product"}
-                    </Tooltip>
-                  }
-                >
-                  <Button
-                    variant={
-                      product.isActive ? "outline-danger" : "outline-success"
-                    }
-                    onClick={() =>
-                      handleShowConfirm("updateStatus", product.id)
-                    }
-                    className='me-2'
-                  >
-                    {product.isActive ? <AiOutlineClose /> : <AiOutlineCheck />}
-                  </Button>
-                </OverlayTrigger>
-
-                <OverlayTrigger
-                  placement='top'
-                  overlay={<Tooltip>Edit Product</Tooltip>}
-                >
-                  <Button
-                    variant='outline-secondary'
-                    onClick={() => handleModalShow(product)}
-                    className='mx-2'
-                  >
-                    <FaEdit />
-                  </Button>
-                </OverlayTrigger>
-
-                <OverlayTrigger
-                  placement='top'
-                  overlay={<Tooltip>Delete Product</Tooltip>}
-                >
-                  <Button
-                    variant='outline-danger'
-                    onClick={() => handleShowConfirm("delete", product.id)}
-                  >
-                    <RiDeleteBin5Line />
-                  </Button>
-                </OverlayTrigger>
+          {showSpinner ? (
+            <tr>
+              <td colSpan='10'>
+                <div className='d-flex justify-content-center align-items-center'>
+                  <Spinner animation='grow' />
+                  <p className='mt-1  ms-2'>Loading...</p>
+                </div>
               </td>
             </tr>
-          ))}
+          ) : (
+            currentProducts.map((product) => (
+              <tr key={product.id}>
+                <td>{product.name}</td>
+                <td>{product.description}</td>
+                <td>{product.code}</td>
+                <td>{product.categoryName}</td>
+                <td>{product.measurementUnitName}</td>
+                <td className='text-center'>{product.itemPerCase}</td>
+                <td className='text-end'>{Number(product.cost).toFixed(2)}</td>
+                <td className='text-end'>{Number(product.price).toFixed(2)}</td>
+                <td className='text-center'>
+                  {product.isActive ? "Active" : "Inactive"}
+                </td>
+                <td className='text-center'>
+                  <OverlayTrigger
+                    placement='top'
+                    overlay={
+                      <Tooltip>
+                        {product.isActive
+                          ? "Deactivate Product"
+                          : "Activate Product"}
+                      </Tooltip>
+                    }
+                  >
+                    <Button
+                      variant={
+                        product.isActive ? "outline-danger" : "outline-success"
+                      }
+                      onClick={() =>
+                        handleShowConfirm("updateStatus", product.id)
+                      }
+                      className='me-2'
+                    >
+                      {product.isActive ? (
+                        <AiOutlineClose />
+                      ) : (
+                        <AiOutlineCheck />
+                      )}
+                    </Button>
+                  </OverlayTrigger>
+
+                  <OverlayTrigger
+                    placement='top'
+                    overlay={<Tooltip>Edit Product</Tooltip>}
+                  >
+                    <Button
+                      variant='outline-secondary'
+                      onClick={() => handleModalShow(product)}
+                      className='mx-2'
+                    >
+                      <FaEdit />
+                    </Button>
+                  </OverlayTrigger>
+
+                  <OverlayTrigger
+                    placement='top'
+                    overlay={<Tooltip>Delete Product</Tooltip>}
+                  >
+                    <Button
+                      variant='outline-danger'
+                      onClick={() => handleShowConfirm("delete", product.id)}
+                    >
+                      <RiDeleteBin5Line />
+                    </Button>
+                  </OverlayTrigger>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </Table>
       <Pagination className='justify-content-center'>
