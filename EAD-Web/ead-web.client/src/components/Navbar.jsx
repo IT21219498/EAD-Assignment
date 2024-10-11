@@ -115,9 +115,9 @@ const NavigationBar = () => {
             {user && user.role === "CSR" && (
               <>
                 {/* CSR-Specific Links */}
-                <Nav.Link href="#customer-orders">
+                {/* <Nav.Link href="#customer-orders">
                   Customer Order Management
-                </Nav.Link>
+                </Nav.Link> */}
                 <NavDropdown
                   title="Account Management"
                   id="csr-management-dropdown"

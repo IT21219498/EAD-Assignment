@@ -1,3 +1,12 @@
+/* 
+  This controller is responsible for handling all the requests related to the inventory.
+  It provides the following functionalities:
+  1. Get all available stock
+  2. Get stocks that are below the minimum quantity
+  3. Update stock quantity
+  4. Delete stock by id
+*/
+
 using EAD_Web.Server.Models;
 using MongoDB.Driver;
 using Microsoft.AspNetCore.Mvc;
@@ -108,7 +117,7 @@ namespace EAD_Web.Server.Controllers
             }
         }
 
-        //delete stock
+        //delete stock by id
         [HttpDelete("deletestock/{id}")]
         public async Task<ActionResult> DeleteStock(string id)
         {

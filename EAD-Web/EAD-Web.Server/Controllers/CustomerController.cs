@@ -57,7 +57,7 @@ namespace EAD_Web.Server.Controllers
             };
 
             await _customers.InsertOneAsync(customer);
-            return Ok("Customer registered successfully, pending activation.");
+            return Ok(new { message = "Customer registered successfully, pending activation." });
         }
         // Activates a customer account based on the provided customer ID.
         [HttpPost("activate/{customerId}")]
@@ -85,6 +85,7 @@ namespace EAD_Web.Server.Controllers
             return Ok("Customer activated successfully.");
         }
 
+        // Modifies the details of an existing customer based on the provided customer ID and update data.
         // Modifies the details of an existing customer based on the provided customer ID and update data.
         [HttpPut("modify/{customerId}")]
         public async Task<IActionResult> ModifyCustomer(string customerId, [FromBody] CustomerUpdateDTO model)
@@ -116,6 +117,13 @@ namespace EAD_Web.Server.Controllers
                 updateDefinition.Add(updateDefinitionBuilder.Set(c => c.Address, model.Address));
             }
 
+            // Check if password is provided, then hash it and add it to the update
+            if (!string.IsNullOrEmpty(model.Password))
+            {
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
+                updateDefinition.Add(updateDefinitionBuilder.Set(c => c.PasswordHash, passwordHash));
+            }
+
             // Always update the UpdatedAt field
             updateDefinition.Add(updateDefinitionBuilder.Set(c => c.UpdatedAt, DateTime.UtcNow));
 
@@ -134,8 +142,9 @@ namespace EAD_Web.Server.Controllers
                 return NotFound("Customer not found");
             }
 
-            return Ok("Customer account updated successfully.");
+            return Ok(new { message = "Customer account updated successfully." });
         }
+
 
         // Deactivates a customer account based on the provided customer ID.
         [HttpPost("deactivate/{customerId}")]
@@ -159,7 +168,8 @@ namespace EAD_Web.Server.Controllers
                 return NotFound("Customer not found");
             }
 
-            return Ok("Customer account deactivated successfully.");
+           return Ok(new { message = "Customer account deactivated successfully." });
+
         }
 
         // Authenticates a customer and generates a JWT token upon successful login.
@@ -169,22 +179,44 @@ namespace EAD_Web.Server.Controllers
             // Find the customer by email
             var customer = await _customers.Find(c => c.Email == model.Email).FirstOrDefaultAsync();
 
-            // Check if the customer exists, is active, and the password is correct
-            if (customer == null || !customer.IsActive || !BCrypt.Net.BCrypt.Verify(model.Password, customer.PasswordHash))
+            // Check if the customer exists
+            if (customer == null)
             {
                 return Unauthorized("Invalid login attempt.");
             }
 
-            // Generate JWT token
+            // Check if the account is pending activation
+            if (!customer.HasBeenActivated)
+            {
+                return Unauthorized("Account pending approval.");
+            }
+
+            // Check if the account is deactivated
+            if (!customer.IsActive)
+            {
+                return Unauthorized("Account has been deactivated.");
+            }
+
+            // Verify the password
+            if (!BCrypt.Net.BCrypt.Verify(model.Password, customer.PasswordHash))
+            {
+                return Unauthorized("Invalid login attempt.");
+            }
+
             var token = GenerateJwtToken(customer);
 
-            // Return the token and customerId in the response
+            // Return token and customer details in the response
             return Ok(new
             {
                 token,
-                customerId = customer.CustomerId.ToString()  // Convert ObjectId to string
+                customerId = customer.CustomerId.ToString(),  
+                fullName = customer.FullName,
+                email = customer.Email,
+                phoneNumber = customer.PhoneNumber,
+                address = customer.Address
             });
         }
+
 
 
         // Generates a JWT token for the authenticated customer.
