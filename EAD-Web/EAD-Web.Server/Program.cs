@@ -30,6 +30,9 @@ builder.Services.AddScoped(sp =>
     return client.GetDatabase("VendiCore"); // Use your database name
 });
 
+builder.Services.AddTransient<IEmailService, SmtpEmailService>();
+
+
 // Register MongoDBContext
 builder.Services.AddScoped<MongoDBContext>();
 

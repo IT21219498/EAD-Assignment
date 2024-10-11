@@ -16,6 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Linq;
 
 namespace EAD_Web.Server.Controllers
 {
@@ -25,15 +26,17 @@ namespace EAD_Web.Server.Controllers
     {
         private readonly IMongoCollection<Customer> _customers;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
-        
+
         // Summary-Initializes a new instance of the CustomerController with the specified MongoDB database and configuration.
         // <param name="database">The MongoDB database instance.</param>
         // <param name="configuration">The application configuration settings.</param>
-        public CustomerController(IMongoDatabase database, IConfiguration configuration)
+        public CustomerController(IMongoDatabase database, IConfiguration configuration, IEmailService emailService)
         {
             _customers = database.GetCollection<Customer>("Customers");
             _configuration = configuration;
+            _emailService = emailService;
         }
 
         // Registers a new customer with the provided details.
@@ -72,7 +75,7 @@ namespace EAD_Web.Server.Controllers
             var filter = Builders<Customer>.Filter.Eq(c => c.CustomerId, objectId);
             var update = Builders<Customer>.Update
                 .Set(c => c.IsActive, true)
-                 .Set(c => c.HasBeenActivated, true)  // Mark customer as activated
+                .Set(c => c.HasBeenActivated, true)  // Mark customer as activated
                 .Set(c => c.UpdatedAt, DateTime.UtcNow);
 
             var result = await _customers.UpdateOneAsync(filter, update);
@@ -80,6 +83,32 @@ namespace EAD_Web.Server.Controllers
             if (result.MatchedCount == 0)
             {
                 return NotFound("Customer not found");
+            }
+
+            // Retrieve the updated customer to get email
+            var updatedCustomer = await _customers.Find(c => c.CustomerId == objectId).FirstOrDefaultAsync();
+
+            if (updatedCustomer != null)
+            {
+                // Prepare email content
+                string subject = "Your Account Has Been Approved";
+                string message = $"<p>Dear {updatedCustomer.FullName},</p>" +
+                                 $"<p>We are pleased to inform you that your account has been approved and is now active.</p>" +
+                                 $"<p>You can now log in using your credentials.</p>" +
+                                 $"<p>Thank you for joining us!</p>" +
+                                 $"<p>Best regards,<br/>Your Company Name</p>";
+
+                try
+                {
+                    // Send the email
+                    await _emailService.SendEmailAsync(updatedCustomer.Email, subject, message);
+                }
+                catch (Exception ex)
+                {
+                    // Log the exception (you might want to use a logging framework)
+                    Console.WriteLine($"Failed to send activation email to {updatedCustomer.Email}: {ex.Message}");
+                    // Optionally, you can choose to return a different response or proceed
+                }
             }
 
             return Ok("Customer activated successfully.");
