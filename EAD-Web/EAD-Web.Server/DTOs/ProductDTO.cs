@@ -31,6 +31,7 @@ namespace EAD_Web.Server.DTOs
         public int? ItemPerCase { get; set; }
 
         public string? SupplierId { get; set; }
+        public string? SupplierName { get; set; }
 
         public string? ImageUrl { get; set; }
         public string? CategoryName { get; set; }
