@@ -179,20 +179,37 @@ namespace EAD_Web.Server.Controllers
             // Find the customer by email
             var customer = await _customers.Find(c => c.Email == model.Email).FirstOrDefaultAsync();
 
-            // Check if the customer exists, is active, and the password is correct
-            if (customer == null || !customer.IsActive || !BCrypt.Net.BCrypt.Verify(model.Password, customer.PasswordHash))
+            // Check if the customer exists
+            if (customer == null)
             {
                 return Unauthorized("Invalid login attempt.");
             }
 
-            // Generate JWT token
+            // Check if the account is pending activation
+            if (!customer.HasBeenActivated)
+            {
+                return Unauthorized("Account pending approval.");
+            }
+
+            // Check if the account is deactivated
+            if (!customer.IsActive)
+            {
+                return Unauthorized("Account has been deactivated.");
+            }
+
+            // Verify the password
+            if (!BCrypt.Net.BCrypt.Verify(model.Password, customer.PasswordHash))
+            {
+                return Unauthorized("Invalid login attempt.");
+            }
+
             var token = GenerateJwtToken(customer);
 
             // Return token and customer details in the response
             return Ok(new
             {
                 token,
-                customerId = customer.CustomerId.ToString(),  // Convert ObjectId to string
+                customerId = customer.CustomerId.ToString(),  
                 fullName = customer.FullName,
                 email = customer.Email,
                 phoneNumber = customer.PhoneNumber,
