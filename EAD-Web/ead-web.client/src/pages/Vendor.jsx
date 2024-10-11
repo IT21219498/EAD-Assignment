@@ -468,7 +468,7 @@ const Vendor = () => {
             Reset
           </Button>
           <Button variant="primary" onClick={handleSaveVendor}>
-            {editingVendor ? "Update Product" : "Add Product"}
+            {editingVendor ? "Update Vendor" : "Add Vendor"}
           </Button>
         </Modal.Footer>
       </Modal>
