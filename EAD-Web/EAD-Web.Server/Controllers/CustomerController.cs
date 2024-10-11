@@ -86,6 +86,7 @@ namespace EAD_Web.Server.Controllers
         }
 
         // Modifies the details of an existing customer based on the provided customer ID and update data.
+        // Modifies the details of an existing customer based on the provided customer ID and update data.
         [HttpPut("modify/{customerId}")]
         public async Task<IActionResult> ModifyCustomer(string customerId, [FromBody] CustomerUpdateDTO model)
         {
@@ -116,6 +117,13 @@ namespace EAD_Web.Server.Controllers
                 updateDefinition.Add(updateDefinitionBuilder.Set(c => c.Address, model.Address));
             }
 
+            // Check if password is provided, then hash it and add it to the update
+            if (!string.IsNullOrEmpty(model.Password))
+            {
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
+                updateDefinition.Add(updateDefinitionBuilder.Set(c => c.PasswordHash, passwordHash));
+            }
+
             // Always update the UpdatedAt field
             updateDefinition.Add(updateDefinitionBuilder.Set(c => c.UpdatedAt, DateTime.UtcNow));
 
@@ -135,8 +143,8 @@ namespace EAD_Web.Server.Controllers
             }
 
             return Ok(new { message = "Customer account updated successfully." });
-
         }
+
 
         // Deactivates a customer account based on the provided customer ID.
         [HttpPost("deactivate/{customerId}")]
