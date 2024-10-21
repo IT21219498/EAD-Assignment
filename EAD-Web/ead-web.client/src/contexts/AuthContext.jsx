@@ -35,7 +35,7 @@ export const AuthContextProvider = ({ children }) => {
       } else {
         setUser(null);
         sessionStorage.clear();
-        navigate("/login", { replace: true });
+        // navigate("/login", { replace: true });
       }
     } catch (err) {
       setUser(null);

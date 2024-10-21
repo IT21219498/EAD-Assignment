@@ -13,9 +13,9 @@ const NavigationBar = () => {
   const { user, setUser,logoutUser } = useContext(AuthContext);
 
   // useEffect hook to redirect to login if user is not authenticated
-  useEffect(() => {
-    !user && navigate("/login", { replace: true });
-  }, []);
+  // useEffect(() => {
+  //   !user && navigate("/login", { replace: true });
+  // }, []);
 
   const handleLogout = (e) => {
     e.preventDefault(); // Prevent default action to avoid page refresh
